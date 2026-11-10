@@ -1362,6 +1362,7 @@ function applyLists(snap) {
     if (V.list === l.id) { V.list = 'all'; V.sel = null; V.detail = false; }
   }
   if (changed) { applyNames(); resolveNames(); softRender(); }
+  if (STORE.kind === 'hosted' && !ME.name && !V.askName && !V.joinTarget && S.lists.some(l => l.remote && l.role !== 'viewer')) needName();
 }
 function applyItems(listId, snap) {
   const l = S.lists.find(x => x.id === listId && x.remote); const sh = STORE.shadow.get(listId); if (!l || !sh) return;
@@ -1546,6 +1547,9 @@ async function hostedBackend() {
     assetUrl:id => CFG.supabaseUrl.replace(/\/+$/, '') + '/storage/v1/object/public/photos/' + id,
     join:async id => { const ok = await rpc('join_list', {p_id:id}); refresh('lists', 0); refresh('people'); return ok === true; },
     leave:async id => { await rpc('leave_list', {p_id:id}); refresh('lists', 0); },
+    /* The list's name and whether it is view only, from its invite link, before joining. */
+    peek:async id => { const r = await rpc('list_preview', {p_id:id}); const row = Array.isArray(r) ? r[0] : r; return row && typeof row === 'object' ? {name:str(row.name, 80), vis:str(row.vis, 10), type:str(row.type, 10)} : null; },
+    setName:async n => { await rpc('set_name', {p_name:n}); refresh('people'); },
     /* How many shared lists of each type hold these items. Numbers only. */
     stats:async keys => {
       const out = {};
@@ -1553,24 +1557,53 @@ async function hostedBackend() {
       return out;
     }};
 }
-function nameHTML() {
-  return `<h2>You're in</h2><p class="sub">What should the others on the list call you?</p>
-    <label class="fld"><span>Your name</span><input id="nickInput" maxlength="40" value="${esc(ME.name)}" placeholder="e.g. Sam" autocomplete="off"></label>
-    <div class="m-actions"><button type="button" class="ghost" data-action="modal-close">Skip</button><button type="button" class="btn-accent" data-action="save-name-close">Save</button></div>`;
+/* Everyone on a shared list must have a name the others can see. Resolves with the name, or '' if they back out. */
+function askName(o) {
+  if (V.askName) return V.askName.promise;
+  let done; const promise = new Promise(r => { done = r; });
+  V.askName = {promise, done, required:!!o.required};
+  openModal(`<h2>${esc(o.title)}</h2><p class="sub">${esc(o.sub)}</p>
+    <form data-form="ask-name"><label class="fld"><span>Your name</span><input id="nickInput" name="nick" required maxlength="40" value="${esc(ME.name)}" placeholder="e.g. Sam" autocomplete="given-name"></label>
+    <p class="imp-note" id="askNameErr" hidden></p>
+    <div class="m-actions">${o.required ? '' : `<button type="button" class="ghost" data-action="ask-name-cancel">${esc(o.cancel || 'Not now')}</button>`}<button type="submit" class="btn-accent">${esc(o.ok || 'Save')}</button></div></form>`, '#nickInput');
+  return promise;
+}
+function finishAskName(name) {
+  const a = V.askName; if (!a) return;
+  V.askName = null; closeModal(true); a.done(name);
+}
+async function saveNameNow(name) {
+  setNick(name);
+  if (STORE.setName) await STORE.setName(name);
+  applyNames(); softRender();
+}
+async function needName() {
+  const name = await askName({required:true, title:'What should people call you?', sub:'You are on a shared list. Add your name so the others know who added what.'});
+  if (name) { try { await saveNameNow(name); toast('Name saved'); } catch (e) { toast('Could not save your name. It will be saved when you are back online.'); } }
 }
 async function joinFromLink() {
   const m = location.hash.match(/^#join-([a-z0-9]{12,40})$/); if (!m) return;
   try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
   try {
+    let pv = null;
+    try { pv = STORE.peek ? await STORE.peek(m[1]) : null; } catch (e) { pv = null; }
+    if (STORE.peek && !pv) { toast('That invite link no longer works.'); return; }
+    /* Nobody joins a list people add to without a name the others can see. View-only guides need no name. */
     V.joinTarget = m[1];
+    if (pv && pv.vis !== 'public') {
+      const name = await askName({title:`Join “${pv.name || 'this list'}”`, sub:'Tell the others what to call you. Your name shows next to everything you add.', ok:'Join list', cancel:'Not now'});
+      if (!name) { V.joinTarget = null; toast('You have not joined. Open the link again when you are ready.'); return; }
+      try { await saveNameNow(name); } catch (e) { V.joinTarget = null; toast('Could not save your name. Check your connection and open the link again.'); return; }
+    }
     if (!(await STORE.join(m[1]))) { V.joinTarget = null; toast('That invite link no longer works.'); return; }
     /* Wait a moment for the list to arrive, so a view-only guest is not asked for a name they do not need. */
     let jl = null;
     for (let i = 0; i < 30 && !(jl = getList(m[1])); i++) await new Promise(r => setTimeout(r, 100));
     if (jl) { V.list = m[1]; V.joinTarget = null; render(); }
     saveLocal();
+    V.joinTarget = null;
     const viewer = !!jl && jl.role === 'viewer';
-    if (!ME.name && !viewer) openModal(nameHTML(), '#nickInput'); else toast(viewer ? `${TYPE[jl.type]} added to your lists` : 'You have joined the list');
+    toast(viewer ? `${TYPE[jl.type]} added to your lists` : `You have joined ${jl ? jl.name : 'the list'}`);
   } catch (e) { V.joinTarget = null; toast('Could not join that list. Check your connection and open the link again.'); }
 }
 async function initStore() {
@@ -1583,7 +1616,7 @@ async function initStore() {
     try {
       const b = await hostedBackend();
       db = b.db; user = b.user; assets = b.assets;
-      Object.assign(STORE, {kind:'hosted', assetUrl:b.assetUrl, join:b.join, leave:b.leave, stats:b.stats});
+      Object.assign(STORE, {kind:'hosted', assetUrl:b.assetUrl, join:b.join, leave:b.leave, stats:b.stats, peek:b.peek, setName:b.setName});
     } catch (e) { STORE.state = 'error'; renderSync(); return; }
   } else {
     try { [db, user, assets] = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('assets')]); } catch (e) {}
@@ -3241,7 +3274,8 @@ function openModal(html, focusSel) {
   $('#modal').innerHTML = html; $('#modalBack').hidden = false;
   setTimeout(() => { const f = focusSel && $(focusSel); if (f) f.focus(); }, 40);
 }
-function closeModal() {
+function closeModal(force) {
+  if (V.askName && !force) { if (V.askName.required) return; finishAskName(''); return; }
   $('#modalBack').hidden = true; $('#modal').innerHTML = '';
   if (V.pi) { V.pi.urls.forEach(u => URL.revokeObjectURL(u)); V.pi = null; }
   if (MAP && !V.preview) MAP.setTemp(null);
@@ -3503,11 +3537,17 @@ const ACTIONS = {
   'close-replay': () => { stopPlay(); if (!isMobile() && V.sel) { V.detail = true; renderDetail(); } },
   'start-sharing': async t => {
     const l = getList(t.dataset.id); if (!l) return;
+    if (STORE.kind === 'hosted' && !ME.name) {
+      const name = await askName({title:'Add your name to share', sub:'People you invite will see it next to everything you add.', ok:'Continue'});
+      if (!name) return;
+      try { await saveNameNow(name); } catch (e) { toast('Could not save your name. Try again.'); return; }
+      openModal(shareHTML(l), null); t = $('#modal [data-action=start-sharing]') || t;
+    }
     t.disabled = true; t.textContent = 'Sharing';
     if (await makeRemote(l)) { render(); openModal(shareHTML(l), null); toast('The list is now shared'); }
     else { t.disabled = false; t.textContent = 'Share this list'; }
   },
-  'save-name-close': () => { const v = ($('#nickInput').value || '').trim().slice(0, 40); setNick(v); applyNames(); closeModal(); render(); toast('You have joined the list'); },
+  'ask-name-cancel': () => finishAskName(''),
   'leave-list': async t => {
     const l = getList(t.dataset.id); if (!l || !STORE.leave) return;
     if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Tap again to leave'; return; }
@@ -3558,9 +3598,18 @@ document.addEventListener('submit', async e => {
       renderLibrary(); renderMain(); syncMap(); selectPin(p.id, {fly:false});
       toast(`Pinned to ${l.name}`);
     }
+  } else if (kind === 'ask-name') {
+    const v = String(fd.get('nick') || '').trim().slice(0, 40);
+    if (!v) { const er = $('#askNameErr'); if (er) { er.hidden = false; er.textContent = 'Please enter a name.'; } return; }
+    finishAskName(v);
   } else if (kind === 'new-list') {
     const name = String(fd.get('name') || '').trim(); if (!name) return;
-    const vis = fd.get('vis') || 'private'; const remote = STORE.on && STORE.canWrite && vis !== 'private';
+    let vis = fd.get('vis') || 'private';
+    if (STORE.kind === 'hosted' && vis !== 'private' && !ME.name) {
+      const nick = await askName({title:'Add your name to share', sub:'People you invite will see it next to everything you add.', ok:'Create list', cancel:'Keep it private'});
+      if (nick) { try { await saveNameNow(nick); } catch (e) { vis = 'private'; } } else vis = 'private';
+    }
+    const remote = STORE.on && STORE.canWrite && vis !== 'private';
     const l = {id:remote ? rid() : uid(), name, type:fd.get('type') || 'trip', vis, collab:[], desc:String(fd.get('desc') || '').trim(), colors:PALETTES[S.lists.length % PALETTES.length], pins:[], info:[], remote, created:nowISO()};
     if (remote) l.ownerId = ME.id;
     S.lists.unshift(l); save(); closeModal();

@@ -129,18 +129,28 @@ begin
   delete from lists where id = p_id;
 end $$;
 
--- Joining needs nothing but the list id from an invite link.
--- People who join a public list can look but not change it.
+-- Joining needs the list id from an invite link, and, for a list people add to, a display name.
+-- People who join a public list can look but not change it, and need no name.
 create or replace function public.join_list(p_id text) returns boolean
 language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then raise exception 'not signed in'; end if;
   if not exists (select 1 from lists where id = p_id) then return false; end if;
+  if exists (select 1 from lists where id = p_id and coalesce(data->>'vis', '') <> 'public')
+     and not exists (select 1 from profiles where id = auth.uid() and btrim(name) <> '') then
+    raise exception 'add your name before joining';
+  end if;
   insert into list_members (list_id, user_id, role)
   select l.id, auth.uid(), case when l.data->>'vis' = 'public' then 'viewer' else 'editor' end from lists l where l.id = p_id
   on conflict do nothing;
   return true;
 end $$;
+
+-- What an invite link opens: the list's name, type and whether it is view only. Nothing else.
+create or replace function public.list_preview(p_id text) returns table (name text, type text, vis text)
+language sql stable security definer set search_path = public as $$
+  select left(coalesce(data->>'name', ''), 80), coalesce(data->>'type', ''), coalesce(data->>'vis', '') from lists where id = p_id;
+$$;
 
 -- The owner stays on their own list; they delete it instead.
 create or replace function public.leave_list(p_id text) returns void
@@ -167,8 +177,8 @@ language sql stable security definer set search_path = public as $$
   group by 1, 2;
 $$;
 
-revoke all on function public.can_edit(text), public.item_stats(text[]) from public, anon;
-grant execute on function public.can_edit(text), public.item_stats(text[]) to authenticated;
+revoke all on function public.can_edit(text), public.item_stats(text[]), public.list_preview(text) from public, anon;
+grant execute on function public.can_edit(text), public.item_stats(text[]), public.list_preview(text) to authenticated;
 
 revoke all on function public.is_member(text), public.shares_list_with(uuid), public.put_list(text, jsonb),
   public.put_item(text, text, jsonb), public.delete_item(text, text), public.delete_list(text),
