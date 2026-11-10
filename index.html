@@ -1266,7 +1266,7 @@ function applyNames() {
   for (const l of S.lists) {
     if (!l.remote) continue;
     const seen = new Set(); const add = id => { if (id && id !== ME.id) seen.add(nameOf(id)); };
-    add(l.ownerId);
+    add(l.ownerId); (l.memberIds || []).forEach(add);
     for (const p of l.pins) {
       p.by = nameOf(p.byId || ME.id); add(p.byId);
       for (const m of p.memories) { m.by = nameOf(m.byId || ME.id); add(m.byId); }
@@ -1282,7 +1282,7 @@ function resolveNames() {
     if (!STORE.user) return;
     const ids = new Set();
     for (const l of S.lists) if (l.remote) {
-      if (l.ownerId) ids.add(l.ownerId);
+      if (l.ownerId) ids.add(l.ownerId); (l.memberIds || []).forEach(id => ids.add(id));
       for (const p of l.pins) { if (p.byId) ids.add(p.byId); p.memories.forEach(m => m.byId && ids.add(m.byId)); p.photos.forEach(ph => ph.byId && ids.add(ph.byId)); }
     }
     ids.delete(ME.id);
@@ -1360,6 +1360,8 @@ function applyLists(snap) {
     const canon = JSON.stringify({...next, order});
     const role = m._role === 'viewer' ? 'viewer' : 'editor';
     if (l.role !== role) { l.role = role; changed = true; if (role === 'viewer' && V.list === l.id) V.editList = false; }
+    const mem = (Array.isArray(m._members) ? m._members : []).slice(0, 200).map(x => str(x, 120)).filter(Boolean);
+    if (JSON.stringify(mem) !== JSON.stringify(l.memberIds || [])) { l.memberIds = mem; changed = true; }
     if (canon !== sh.meta) changed = true;
     sh.meta = canon;
     Object.assign(l, next); l._order = order; sortPins(l); ensureSub(d.id);
@@ -1479,10 +1481,15 @@ async function hostedBackend() {
     const m = path.match(/^lists\/([a-z0-9]+)\/items$/);
     if (path === 'lists') {
       /* Each list comes with this person's role on it: editor, or viewer on a view-only guide. */
-      const [a, b] = await Promise.all([sb.from('lists').select('id,data'), sb.from('list_members').select('list_id,role').eq('user_id', uid)]);
+      const [a, b] = await Promise.all([sb.from('lists').select('id,data'), sb.from('list_members').select('list_id,user_id,role')]);
       if (a.error) throw a.error;
-      const roles = new Map(((b && b.data) || []).map(r => [r.list_id, r.role]));
-      return a.data.map(r => ({id:r.id, data:{...r.data, _role:roles.get(r.id) || 'editor'}}));
+      const roles = new Map(), members = new Map();
+      for (const r of (b && b.data) || []) {
+        if (r.user_id === uid) roles.set(r.list_id, r.role);
+        /* Everyone who has joined counts as on the list, even before they add anything. Viewers of a public guide are not shown. */
+        else if (r.role !== 'viewer') { if (!members.has(r.list_id)) members.set(r.list_id, []); members.get(r.list_id).push(r.user_id); }
+      }
+      return a.data.map(r => ({id:r.id, data:{...r.data, _role:roles.get(r.id) || 'editor', _members:members.get(r.id) || []}}));
     }
     else if (path === 'people') q = sb.from('profiles').select('id,name');
     else if (m) q = sb.from('items').select('id,data').eq('list_id', m[1]);
