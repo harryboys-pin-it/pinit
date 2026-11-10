@@ -35,6 +35,8 @@ Edit `src/app.html`, run `./build.sh`, commit and push. GitHub Pages updates in 
 - Each browser gets its own anonymous sign-in. Nobody needs an account; they choose a display name.
 - A list is visible only to its members. The invite link carries the list's random id, and opening it adds you as a member.
 - Members can add and edit items. Only the person who created a list can delete it.
+- A list shared as **view only** (a public guide) adds people who open its link as viewers. They can read it and save any pin to their own lists, but cannot change it. The owner chooses this in the Share dialog; it applies to people who join from then on.
+- Each pin shows how many shared lists hold it, by type of list (trips, guides, wishlists). The database returns numbers only (`item_stats`), never which lists or whose. Items match on their Google place id, or their film or book id.
 - Photos are resized and stripped of location data in the browser, then stored in a public bucket under random names.
 
 Known limits of the prototype: clearing a browser's data loses that sign-in (you can rejoin with the link, but you stop being the owner of lists you created), and anyone who has an invite link can join.
