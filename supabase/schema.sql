@@ -1,0 +1,175 @@
+-- PinIt database: shared lists, their items, who is on each list, and display names.
+-- Run once in a new Supabase project (SQL editor, or through the Supabase connector).
+-- Safe to run again: everything is created only if missing or replaced in place.
+--
+-- Model
+--   A list is visible only to its members. The person who creates it is the owner and first member.
+--   Anyone who has the list's id (it travels in the invite link, and is random) can join.
+--   Members read through row level security. All writes go through the functions below,
+--   which check membership themselves, so there are no direct insert/update/delete rights.
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users (id) on delete cascade,
+  name text not null default '' check (char_length(name) <= 60),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.lists (
+  id text primary key check (id ~ '^[a-z0-9]{12,40}$'),
+  owner uuid not null references auth.users (id) on delete cascade,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.list_members (
+  list_id text not null references public.lists (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  joined_at timestamptz not null default now(),
+  primary key (list_id, user_id)
+);
+
+create table if not exists public.items (
+  list_id text not null references public.lists (id) on delete cascade,
+  id text not null check (id ~ '^[A-Za-z0-9_-]{1,64}$'),
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  primary key (list_id, id)
+);
+
+create index if not exists list_members_user_idx on public.list_members (user_id);
+
+alter table public.profiles enable row level security;
+alter table public.lists enable row level security;
+alter table public.list_members enable row level security;
+alter table public.items enable row level security;
+
+-- Membership checks run as the function owner so the policies below don't recurse.
+create or replace function public.is_member(p_list text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from list_members where list_id = p_list and user_id = auth.uid());
+$$;
+
+create or replace function public.shares_list_with(p_user uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from list_members mine join list_members theirs on theirs.list_id = mine.list_id
+    where mine.user_id = auth.uid() and theirs.user_id = p_user);
+$$;
+
+drop policy if exists "members read lists" on public.lists;
+create policy "members read lists" on public.lists for select to authenticated using (public.is_member(id));
+
+drop policy if exists "members read items" on public.items;
+create policy "members read items" on public.items for select to authenticated using (public.is_member(list_id));
+
+drop policy if exists "members read membership" on public.list_members;
+create policy "members read membership" on public.list_members for select to authenticated using (public.is_member(list_id));
+
+drop policy if exists "read names of people on my lists" on public.profiles;
+create policy "read names of people on my lists" on public.profiles for select to authenticated
+  using (id = auth.uid() or public.shares_list_with(id));
+
+revoke all on public.profiles, public.lists, public.list_members, public.items from anon, authenticated;
+grant select on public.profiles, public.lists, public.list_members, public.items to authenticated;
+
+-- ---------- writes ----------
+
+create or replace function public.put_list(p_id text, p_data jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if pg_column_size(p_data) > 200000 then raise exception 'list too large'; end if;
+  if exists (select 1 from lists where id = p_id) then
+    if not is_member(p_id) then raise exception 'not a member'; end if;
+    update lists set data = p_data, updated_at = now() where id = p_id;
+  else
+    insert into lists (id, owner, data) values (p_id, auth.uid(), p_data);
+    insert into list_members (list_id, user_id) values (p_id, auth.uid());
+  end if;
+end $$;
+
+create or replace function public.put_item(p_list text, p_id text, p_data jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_member(p_list) then raise exception 'not a member'; end if;
+  if pg_column_size(p_data) > 600000 then raise exception 'item too large'; end if;
+  if not exists (select 1 from items where list_id = p_list and id = p_id)
+     and (select count(*) from items where list_id = p_list) >= 1000 then
+    raise exception 'list is full';
+  end if;
+  insert into items (list_id, id, data) values (p_list, p_id, p_data)
+  on conflict (list_id, id) do update set data = excluded.data, updated_at = now();
+end $$;
+
+create or replace function public.delete_item(p_list text, p_id text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not is_member(p_list) then raise exception 'not a member'; end if;
+  delete from items where list_id = p_list and id = p_id;
+end $$;
+
+-- Only the owner can delete a list. Its items and memberships go with it.
+create or replace function public.delete_list(p_id text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from lists where id = p_id and owner = auth.uid()) then
+    raise exception 'only the owner can delete a list';
+  end if;
+  delete from lists where id = p_id;
+end $$;
+
+-- Joining needs nothing but the list id from an invite link.
+create or replace function public.join_list(p_id text) returns boolean
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if not exists (select 1 from lists where id = p_id) then return false; end if;
+  insert into list_members (list_id, user_id) values (p_id, auth.uid()) on conflict do nothing;
+  return true;
+end $$;
+
+-- The owner stays on their own list; they delete it instead.
+create or replace function public.leave_list(p_id text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  delete from list_members m using lists l
+  where m.list_id = p_id and m.user_id = auth.uid() and l.id = m.list_id and l.owner <> auth.uid();
+end $$;
+
+create or replace function public.set_name(p_name text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  insert into profiles (id, name) values (auth.uid(), left(coalesce(p_name, ''), 60))
+  on conflict (id) do update set name = excluded.name, updated_at = now();
+end $$;
+
+revoke all on function public.is_member(text), public.shares_list_with(uuid), public.put_list(text, jsonb),
+  public.put_item(text, text, jsonb), public.delete_item(text, text), public.delete_list(text),
+  public.join_list(text), public.leave_list(text), public.set_name(text) from public, anon;
+grant execute on function public.is_member(text), public.shares_list_with(uuid), public.put_list(text, jsonb),
+  public.put_item(text, text, jsonb), public.delete_item(text, text), public.delete_list(text),
+  public.join_list(text), public.leave_list(text), public.set_name(text) to authenticated;
+
+-- ---------- live updates ----------
+do $$
+declare t text;
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    foreach t in array array['lists', 'items', 'list_members', 'profiles'] loop
+      if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t) then
+        execute format('alter publication supabase_realtime add table public.%I', t);
+      end if;
+    end loop;
+  end if;
+end $$;
+
+-- ---------- photos ----------
+-- Photos are resized and stripped of location data in the browser before upload.
+-- The bucket is public: a photo opens for anyone who has its address, which is random.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('photos', 'photos', true, 2097152, array['image/jpeg'])
+on conflict (id) do update set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "signed-in people add photos" on storage.objects;
+create policy "signed-in people add photos" on storage.objects for insert to authenticated with check (bucket_id = 'photos');
