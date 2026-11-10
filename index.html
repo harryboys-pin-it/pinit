@@ -15,25 +15,30 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: music-app shell. Library rail | list as a tracklist | map, with a full-width "now playing" pin bar.
-   Deliberately dark-only, like the apps it borrows its feel from. */
+   Colours: "Mint and cream". A warm cream ground, mint tints for selection, pine green for actions
+   and soft peach for pins, so the app sits calmly around a light map. */
 :root{
-  color-scheme:dark;
-  --bg:#0C0F14;
-  --panel:#151922;
-  --panel-2:#1C212C;
-  --hover:#242A36;
-  --line:#2A3140;
-  --fg:#F3EFE6;
-  --muted:#98A0AE;
-  --faint:#6B7383;
-  --accent:#F2B33D;
-  --accent-ink:#1D1503;
-  --danger:#EF7A62;
-  --good:#6CCB8F;
-  --map-bg:#10151C;
-  --map-minor:#171E28;
-  --map-major:#1F2833;
-  --map-park:#14221B;
+  color-scheme:light;
+  --bg:#F3EEE3;
+  --panel:#FFFCF6;
+  --panel-2:#F6F0E4;
+  --hover:#EFE8DA;
+  --sel:#DCEEE4;
+  --line:#E3DBCA;
+  --fg:#1E2B27;
+  --muted:#56655E;
+  --faint:#5D6B64;
+  --accent:#256E58;
+  --accent-ink:#FFFFFF;
+  --pin:#F2A27F;
+  --pin-ink:#3A1D10;
+  --danger:#B03E28;
+  --good:#286C44;
+  --shadow:52,44,28;
+  --map-bg:#ECE6D8;
+  --map-minor:#F7F2E8;
+  --map-major:#FFFDF8;
+  --map-park:#CFE5CF;
   --f-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
   --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
@@ -91,7 +96,7 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .brand{display:flex;align-items:center;gap:9px;font:800 22px/1 var(--f-display);letter-spacing:-.02em}
 .brand .mark{width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
 .brand .mark .ic{width:18px;height:18px}
-.search{flex:1;max-width:440px;margin-inline:auto;display:flex;align-items:center;gap:8px;background:var(--panel-2);border-radius:999px;padding:0 14px;height:42px;border:1px solid transparent;color:var(--muted)}
+.search{flex:1;max-width:440px;margin-inline:auto;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:0 14px;height:42px;border:1px solid transparent;color:var(--muted)}
 .search:focus-within{border-color:var(--fg);color:var(--fg)}
 .search input{flex:1;min-width:0;background:none;border:0;outline:0;height:100%}
 .search input::placeholder{color:var(--muted)}
@@ -127,12 +132,12 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .lib-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:2px;padding-bottom:8px}
 .lib-row{display:flex;align-items:center;gap:12px;padding:7px 8px;border-radius:8px;border:0;background:none;text-align:left;cursor:pointer;width:100%}
 .lib-row:hover{background:var(--hover)}
-.lib-row.on{background:var(--panel-2)}
+.lib-row.on{background:var(--sel)}
 .lib-row.on .lib-name{color:var(--accent)}
 .cover{display:block;border-radius:6px;overflow:hidden;flex:none;background:var(--panel-2)}
 .cover svg{display:block;width:100%;height:100%}
 .cover.sm{width:48px;height:48px;border-radius:5px}
-.cover.lg{width:132px;height:132px;border-radius:8px;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+.cover.lg{width:132px;height:132px;border-radius:8px;box-shadow:0 14px 34px rgba(var(--shadow),0.2)}
 .lib-txt{display:flex;flex-direction:column;min-width:0;gap:3px}
 .lib-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lib-sub{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:12.5px;white-space:nowrap}
@@ -141,7 +146,7 @@ input,textarea,select{font:inherit;color:var(--fg)}
 
 /* main list */
 .main{overflow:auto;--cols:24px 36px minmax(0,1fr) 26px 66px}
-.top-grad{background:linear-gradient(180deg,color-mix(in srgb,var(--a) 55%,var(--panel)) 0%,color-mix(in srgb,var(--a) 16%,var(--panel)) 72%,var(--panel) 100%);padding:26px 20px 4px}
+.top-grad{background:linear-gradient(180deg,color-mix(in srgb,var(--a) 50%,var(--panel)) 0%,color-mix(in srgb,var(--a) 14%,var(--panel)) 72%,var(--panel) 100%);padding:26px 20px 4px}
 .list-hero{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
 .hero-txt{min-width:0;flex:1 1 180px;display:flex;flex-direction:column;gap:6px}
 .eyebrow{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em}
@@ -154,7 +159,7 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .avs .av+.av{margin-left:-7px}
 .av{width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;background:var(--c);color:#16120B;font-size:11px;font-weight:700;border:2px solid var(--panel);flex:none}
 .actions{display:flex;align-items:center;gap:10px;padding:18px 0 12px;flex-wrap:wrap}
-.play-big{width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.35);transition:transform .12s}
+.play-big{width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(var(--shadow),0.14);transition:transform .12s}
 .play-big:hover{transform:scale(1.05)}
 .play-big .ic{width:24px;height:24px}
 .rows-head{position:sticky;top:0;z-index:1;display:grid;grid-template-columns:var(--cols);gap:12px;padding:8px 20px;background:var(--panel);border-bottom:1px solid var(--line);color:var(--muted);font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
@@ -163,7 +168,7 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .rows{padding:8px 10px 24px;display:flex;flex-direction:column;gap:1px}
 .row{display:grid;grid-template-columns:var(--cols);gap:12px;align-items:center;width:100%;padding:6px 10px;border:0;border-radius:6px;background:none;text-align:left;cursor:pointer}
 .row:hover{background:var(--hover)}
-.row.sel{background:var(--panel-2)}
+.row.sel{background:var(--sel)}
 .row.sel .pname{color:var(--accent)}
 .num{display:flex;justify-content:center;color:var(--muted);font:500 13px var(--f-mono);font-variant-numeric:tabular-nums}
 .eq{display:none;height:14px;align-items:flex-end;gap:2px}
@@ -196,7 +201,7 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .map-tools{position:absolute;top:12px;left:12px;display:flex;gap:8px;z-index:3}
 .map-tools .pill{background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(6px)}
 .map-tools .pill.primary{background:var(--accent)}
-.drop-banner{position:absolute;top:58px;left:12px;z-index:4;display:flex;align-items:center;gap:10px;background:var(--fg);color:var(--bg);font-weight:700;padding:6px 6px 6px 14px;border-radius:999px;box-shadow:0 10px 24px rgba(0,0,0,.4);max-width:calc(100% - 24px);font-size:13px}
+.drop-banner{position:absolute;top:58px;left:12px;z-index:4;display:flex;align-items:center;gap:10px;background:var(--fg);color:var(--bg);font-weight:700;padding:6px 6px 6px 14px;border-radius:999px;box-shadow:0 10px 24px rgba(var(--shadow),0.16);max-width:calc(100% - 24px);font-size:13px}
 .drop-banner button{background:color-mix(in srgb,var(--bg) 12%,transparent);border:0;border-radius:999px;padding:6px 12px;font-weight:700;cursor:pointer;color:inherit;flex:none}
 .map-foot{position:absolute;left:12px;bottom:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;z-index:2;pointer-events:none;max-width:calc(100% - 24px)}
 .map-foot>*{pointer-events:auto}
@@ -212,20 +217,20 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .pin{position:absolute;left:0;top:0;width:0;height:0;border:0;padding:0;background:none;cursor:pointer;pointer-events:auto}
 .pin:hover{z-index:4}.pin.sel{z-index:3}
 .pin-body{position:absolute;left:-15px;bottom:0;width:30px;height:37px;display:block;transform-origin:50% 100%;transition:transform .18s}
-.pin-head{position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--c);box-shadow:0 3px 8px rgba(0,0,0,.5);display:grid;place-items:center}
-.pin-glyph{transform:rotate(45deg);color:var(--accent-ink);font:700 12px/1 var(--f-mono);display:grid;place-items:center}
+.pin-head{position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--c);box-shadow:0 3px 8px rgba(var(--shadow),0.2);display:grid;place-items:center}
+.pin-glyph{transform:rotate(45deg);color:var(--pin-ink);font:700 12px/1 var(--f-mono);display:grid;place-items:center}
 .pin-glyph .ic{width:15px;height:15px;stroke-width:2.2}
-.pin-label{position:absolute;left:34px;top:3px;white-space:nowrap;background:var(--bg);color:var(--fg);font:600 12px/1.2 var(--f-body);padding:5px 8px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.45);opacity:0;transform:translateX(-4px);transition:opacity .15s,transform .15s;pointer-events:none}
+.pin-label{position:absolute;left:34px;top:3px;white-space:nowrap;background:var(--bg);color:var(--fg);font:600 12px/1.2 var(--f-body);padding:5px 8px;border-radius:6px;box-shadow:0 4px 12px rgba(var(--shadow),0.18);opacity:0;transform:translateX(-4px);transition:opacity .15s,transform .15s;pointer-events:none}
 .pin:hover .pin-label,.pin.sel .pin-label,.pin.temp .pin-label{opacity:1;transform:none}
 .pin.sel .pin-body{transform:scale(1.2)}
-.pin.sel .pin-head{box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 35%,transparent),0 4px 10px rgba(0,0,0,.55)}
+.pin.sel .pin-head{box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 35%,transparent),0 4px 10px rgba(var(--shadow),0.22)}
 .pin.drop .pin-body{animation:drop .55s cubic-bezier(.3,1.45,.5,1) both;animation-delay:var(--d,0ms)}
 @keyframes drop{0%{transform:translateY(-70px);opacity:0}55%{opacity:1}100%{transform:none;opacity:1}}
 .pin.temp .pin-head{animation:pulse 1.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--fg) 40%,transparent)}50%{box-shadow:0 0 0 10px transparent}}
 
 /* pin detail */
-.detail{grid-column:3;grid-row:2;justify-self:end;align-self:stretch;width:350px;max-width:calc(100% - 24px);margin:12px;z-index:5;overflow:auto;background:color-mix(in srgb,var(--panel) 96%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.detail{grid-column:3;grid-row:2;justify-self:end;align-self:stretch;width:350px;max-width:calc(100% - 24px);margin:12px;z-index:5;overflow:auto;background:color-mix(in srgb,var(--panel) 96%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 40px rgba(var(--shadow),0.2)}
 .d-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .d-list{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .d-photos{display:flex;flex-direction:column;gap:6px}
@@ -242,7 +247,7 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .inlists{display:flex;flex-direction:column;gap:2px}
 .inl{display:flex;align-items:center;gap:10px;width:100%;padding:5px 6px;border:0;border-radius:8px;background:none;text-align:left;cursor:pointer}
 .inl:hover{background:var(--hover)}
-.inl.cur{background:var(--panel-2)}
+.inl.cur{background:var(--sel)}
 .cover.xs{width:30px;height:30px;border-radius:4px}
 .ptile.sm{width:30px;height:30px}
 .ptile.sm .ic{width:15px;height:15px}
@@ -286,8 +291,8 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .mcover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
 .mcover.tn{width:36px;height:36px}
 .mcover.res{width:40px;height:58px}
-.mcover.detail{width:96px;height:144px;border-radius:8px;box-shadow:0 10px 24px rgba(0,0,0,.45)}
-.mcover.card{width:100%;aspect-ratio:2/3;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+.mcover.detail{width:96px;height:144px;border-radius:8px;box-shadow:0 10px 24px rgba(var(--shadow),0.18)}
+.mcover.card{width:100%;aspect-ratio:2/3;border-radius:6px;box-shadow:0 8px 20px rgba(var(--shadow),0.14)}
 .gcover{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;gap:6px;padding:10px 10px 12px 13px;color:#fff;
   background:linear-gradient(160deg,hsl(var(--h) 38% 34%),hsl(calc(var(--h) + 40) 42% 17%));box-shadow:inset 3px 0 0 var(--k)}
 .gc-k{display:flex;color:var(--k)}
@@ -376,7 +381,7 @@ h1 .pen{margin-top:-.15em}
 .row.editing:hover{background:none}
 .drag-h{width:32px;height:36px;display:grid;place-items:center;border:0;background:none;color:var(--muted);cursor:grab;touch-action:none;border-radius:6px}
 .drag-h:hover,.drag-h:focus-visible{color:var(--fg);background:var(--hover)}
-.row.dragging{background:var(--panel-2)!important;box-shadow:0 10px 24px rgba(0,0,0,.5);position:relative;z-index:2}
+.row.dragging{background:var(--panel-2)!important;box-shadow:0 10px 24px rgba(var(--shadow),0.2);position:relative;z-index:2}
 .row.dragging .drag-h{cursor:grabbing;color:var(--accent)}
 .edit-hint{display:flex!important;align-items:center;gap:6px;text-transform:none!important;letter-spacing:0!important;font-size:12.5px!important;font-weight:500!important}
 .edit-hint .ic{width:15px;height:15px;color:var(--accent)}
@@ -441,8 +446,8 @@ h1 .pen{margin-top:-.15em}
 .mnav{display:none}
 
 /* modal + toast */
-.modal-back{position:fixed;inset:0;background:rgba(5,7,10,.68);z-index:50;display:grid;place-items:center;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.modal{width:min(480px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 30px 60px rgba(0,0,0,.55)}
+.modal-back{position:fixed;inset:0;background:rgba(30,43,39,.38);z-index:50;display:grid;place-items:center;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.modal{width:min(480px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 30px 60px rgba(var(--shadow),0.22)}
 .modal h2{margin:0 0 4px;font:700 22px/1.15 var(--f-display);letter-spacing:-.015em;overflow-wrap:anywhere}
 .modal .sub{color:var(--muted);margin:0 0 16px;font-size:13px}
 .coord-line{font:12px var(--f-mono);color:var(--faint);margin:0 0 16px}
@@ -532,7 +537,7 @@ h1 .pen{margin-top:-.15em}
 .g-skel{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--panel-2),var(--hover),var(--panel-2));background-size:200% 100%;animation:skel 1.2s linear infinite}
 @keyframes skel{to{background-position:-200% 0}}
 .g-empty{color:var(--muted);font-size:12.5px;margin:0}
-.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:8px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:calc(100% - 32px);text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:8px;z-index:60;box-shadow:0 10px 30px rgba(var(--shadow),0.16);max-width:calc(100% - 32px);text-align:center}
 
 @media (max-width:1180px){
   .app{grid-template-columns:240px minmax(320px,380px) minmax(0,1fr)}
@@ -646,14 +651,14 @@ div.row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .st.want{color:var(--accent)}
 .st-filter{display:flex;gap:6px;padding:0 20px 12px;flex-wrap:wrap}
 .st-filter .chip b{font-weight:500;opacity:.65;margin-left:5px;font-variant-numeric:tabular-nums}
-.pin.want .pin-head{background:var(--bg);box-shadow:inset 0 0 0 3px var(--c),0 3px 8px rgba(0,0,0,.5)}
+.pin.want .pin-head{background:var(--panel);box-shadow:inset 0 0 0 3px var(--c),0 3px 8px rgba(var(--shadow),0.2)}
 .pin.want .pin-glyph{color:var(--c)}
 /* trip days */
 .day-h{display:flex;align-items:baseline;gap:8px;padding:14px 10px 6px;font-size:12px;color:var(--muted)}
 .day-h:first-child{padding-top:4px}
 .day-h b{font:700 13px var(--f-display);color:var(--fg)}
 /* replay */
-.replay{position:absolute;left:12px;right:12px;bottom:12px;z-index:6;max-width:620px;margin-inline:auto;background:color-mix(in srgb,var(--panel) 96%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.55);overflow:hidden}
+.replay{position:absolute;left:12px;right:12px;bottom:12px;z-index:6;max-width:620px;margin-inline:auto;background:color-mix(in srgb,var(--panel) 96%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(var(--shadow),0.22);overflow:hidden}
 .rp-prog{display:flex;gap:3px;padding:10px 12px 0}
 .rp-prog i{flex:1;height:3px;border-radius:2px;background:var(--line);min-width:2px}
 .rp-prog i.done{background:var(--fg)}
@@ -855,28 +860,31 @@ function icon(n, cls = '') {
 }
 
 const CATS = {
-  food:{label:'Food',icon:'food',color:'#E58A5E'},
-  drink:{label:'Drinks',icon:'drink',color:'#E3B04B'},
-  coffee:{label:'Coffee',icon:'coffee',color:'#C79A72'},
-  sight:{label:'Sights',icon:'sight',color:'#7DB4D1'},
-  shop:{label:'Shops',icon:'shop',color:'#D08AB0'},
-  nature:{label:'Outdoors',icon:'nature',color:'#79C28A'},
-  stay:{label:'Stay',icon:'stay',color:'#9AA6E0'},
-  activity:{label:'Activity',icon:'activity',color:'#E6CF6A'}
+  food:{label:'Food',icon:'food',color:'#A64B29'},
+  drink:{label:'Drinks',icon:'drink',color:'#85580B'},
+  coffee:{label:'Coffee',icon:'coffee',color:'#86573A'},
+  sight:{label:'Sights',icon:'sight',color:'#3B6A8E'},
+  shop:{label:'Shops',icon:'shop',color:'#9E436C'},
+  nature:{label:'Outdoors',icon:'nature',color:'#356B43'},
+  stay:{label:'Stay',icon:'stay',color:'#5459A3'},
+  activity:{label:'Activity',icon:'activity',color:'#76690F'}
 };
 const cat = k => CATS[k] || CATS.sight;
 const TYPE = {trip:'Trip', guide:'Guide', wishlist:'Wishlist', all:'Collection'};
-const PALETTES = [['#3E8E7E','#1C2E44'],['#B4584E','#2E1F33'],['#5B7FB8','#1A2230'],['#A7783F','#25302A'],['#8A5A9E','#1E2A2B']];
-const AV_COLORS = ['#E58A5E','#7DB4D1','#79C28A','#D08AB0','#E3B04B','#9AA6E0'];
-const ALL = {id:'all', name:'Everything', type:'all', colors:['#F2B33D','#8C4B12'], desc:'Everything you have saved, across all your lists.', collab:[], pins:[]};
+const PALETTES = [['#CFEBDD','#8CCAAE'],['#F8DCCB','#EFA785'],['#DCEAF2','#94BEDA'],['#F6E7BE','#E2BC63'],['#E6E2F5','#AFA5DE'],['#E2EED6','#A9CB93'],['#F5DDE6','#DFA0B8']];
+/* Lists made before the colour change carry the old dark pairs; show them in the matching soft pair. */
+const OLD_COLORS = {'#3E8E7E':0, '#2F7F86':0, '#D9653B':1, '#5B7FB8':2, '#A7783F':3, '#C98A2B':3, '#8A5A9E':4, '#7E8A3A':5, '#B4584E':6};
+const listColors = l => { const c = (l && l.colors) || PALETTES[0]; const i = OLD_COLORS[String(c[0]).toUpperCase()]; return i == null ? c : PALETTES[i]; };
+const AV_COLORS = ['#F2A27F','#9DC3DA','#A3D3B9','#E7B3CC','#EBCB7E','#B9BDEB'];
+const ALL = {id:'all', name:'Everything', type:'all', colors:['#CFEBDD','#6DB896'], desc:'Everything you have saved, across all your lists.', collab:[], pins:[]};
 
 /* ---------- item kinds: places plus anything else ---------- */
 const KINDS = {
-  place:{label:'Place', plural:'places', icon:'pin', color:'#F2B33D'},
-  film:{label:'Film', plural:'films', icon:'film', color:'#E58A5E'},
-  tv:{label:'TV', plural:'shows', icon:'tv', color:'#9AA6E0'},
-  book:{label:'Book', plural:'books', icon:'book', color:'#79C28A'},
-  other:{label:'Other', plural:'other', icon:'bookmark', color:'#D08AB0'}
+  place:{label:'Place', plural:'places', icon:'pin', color:'#256E58'},
+  film:{label:'Film', plural:'films', icon:'film', color:'#A64B29'},
+  tv:{label:'TV', plural:'shows', icon:'tv', color:'#5459A3'},
+  book:{label:'Book', plural:'books', icon:'book', color:'#356B43'},
+  other:{label:'Other', plural:'other', icon:'bookmark', color:'#9E436C'}
 };
 const kindOf = p => (p && KINDS[p.kind]) ? p.kind : 'place';
 const isPlace = p => kindOf(p) === 'place';
@@ -943,7 +951,7 @@ function P(name, c, area, lat, lng, extra = {}) {
 function seed() {
   const ph = (...s) => s.map(n => ({kind:'sample', seed:n}));
   return {lists:[
-    {id:'lisbon', name:'Lisbon, May 2025', type:'trip', vis:'shared', collab:['Sam','Jess'], colors:['#D9653B','#1F5C63'],
+    {id:'lisbon', name:'Lisbon, May 2025', type:'trip', vis:'shared', collab:['Sam','Jess'], colors:['#F8DCCB','#EFA785'],
      desc:'Long weekend with Sam and Jess. Everyone adds their own photos and notes to each stop.',
      info:[
       {id:uid(), label:'Splitwise', value:'https://www.splitwise.com/join/lisbon-may-25'},
@@ -962,7 +970,7 @@ function seed() {
       newItem({kind:'book', name:'Night Train to Lisbon', year:'2004', creator:'Pascal Mercier', by:'Jess', note:'For the flight out. Set in the same streets we will be walking.', memories:[{by:'Sam', text:'Started it at Gatwick, finished it on the beach.'}]}),
       newItem({kind:'film', name:'Lisbon Story', year:'1994', creator:'Wim Wenders', note:'Watch before we go to get in the mood.'})
     ]},
-    {id:'watchlist', name:'Watchlist', type:'wishlist', vis:'private', collab:[], colors:['#B4584E','#2E1F33'],
+    {id:'watchlist', name:'Watchlist', type:'wishlist', vis:'private', collab:[], colors:['#F5DDE6','#DFA0B8'],
      desc:'Films and shows people keep telling me to watch.', info:[{id:uid(), label:'Where to watch', value:'Check JustWatch before renting anything.'}], pins:[
       newItem({kind:'film', name:'Perfect Days', year:'2023', creator:'Wim Wenders', note:'Recommended by Jess after Lisbon Story.', tags:['rainy Sunday']}),
       newItem({kind:'film', name:'Past Lives', year:'2023', creator:'Celine Song', tags:['date night']}),
@@ -971,7 +979,7 @@ function seed() {
       newItem({kind:'tv', name:'Shōgun', year:'2024', creator:'FX'}),
       newItem({kind:'film', name:'Anatomy of a Fall', year:'2023', creator:'Justine Triet'})
     ]},
-    {id:'bookclub', name:'Book club 2026', type:'guide', vis:'shared', collab:['Priya','Tom'], colors:['#3E8E7E','#1C2E44'],
+    {id:'bookclub', name:'Book club 2026', type:'guide', vis:'shared', collab:['Priya','Tom'], colors:['#CFEBDD','#8CCAAE'],
      desc:'What we are reading this year, in order. One a month.',
      info:[{id:uid(), label:'Next meeting', value:'First Thursday of the month, 7pm, at Priya\'s.'},{id:uid(), label:'Group chat', value:'WhatsApp: Book club'}], pins:[
       newItem({kind:'book', name:'Tomorrow, and Tomorrow, and Tomorrow', year:'2022', creator:'Gabrielle Zevin', by:'Priya', date:'2026-01-08', note:'January pick.', memories:[{by:'Tom', text:'Best book club debate so far.'}]}),
@@ -980,7 +988,7 @@ function seed() {
       newItem({kind:'book', name:'The Thursday Murder Club', year:'2020', creator:'Richard Osman', by:'Priya', note:'Up next.'}),
       newItem({kind:'book', name:'Night Train to Lisbon', year:'2004', creator:'Pascal Mercier', by:'Priya', note:'Loved this. Perfect before a trip to Lisbon.'})
     ]},
-    {id:'localguide', name:'Lisbon like a local', type:'guide', vis:'public', by:'Inês', collab:[], colors:['#2F7F86','#3A2440'],
+    {id:'localguide', name:'Lisbon like a local', type:'guide', vis:'public', by:'Inês', collab:[], colors:['#CFEBDD','#8CCAAE'],
      desc:'Where I send friends when they visit. A public guide by Inês that you can save from.',
      info:[
       {id:uid(), label:'Best time', value:'April to June, or late September. August is hot and crowded.'},
@@ -994,7 +1002,7 @@ function seed() {
       P('Jardim da Estrela','nature','Estrela',38.7143,-9.1594,{by:'Inês',note:'Shady park with a kiosk café. Good for a slow afternoon.'}),
       P('Pensão Amor','drink','Cais do Sodré',38.7068,-9.1437,{by:'Inês',note:'Cocktails in an old boarding house. Gets busy after 11pm.',tags:['late night']})
     ]},
-    {id:'shoreditch', name:'Guide to Shoreditch', type:'guide', vis:'public', collab:[], colors:['#7E8A3A','#263241'],
+    {id:'shoreditch', name:'Guide to Shoreditch', type:'guide', vis:'public', collab:[], colors:['#E2EED6','#A9CB93'],
      desc:'My favourite places around Shoreditch, for friends visiting London.',
      info:[
       {id:uid(), label:'Getting there', value:'Shoreditch High Street (Overground) or Old Street (Northern line).'},
@@ -1009,7 +1017,7 @@ function seed() {
       P('Old Spitalfields Market','shop','Spitalfields',51.5196,-0.0753,{note:'Best on Thursdays for the antiques stalls.'}),
       P('Hoxton Square','nature','Hoxton',51.5283,-0.0820,{note:'Patch of grass for a sunny afternoon with a takeaway coffee.'})
     ]},
-    {id:'beers', name:'After work beers', type:'wishlist', vis:'private', collab:[], colors:['#C98A2B','#3E2A20'],
+    {id:'beers', name:'After work beers', type:'wishlist', vis:'private', collab:[], colors:['#F6E7BE','#E2BC63'],
      desc:'Places to try for work drinks and date night.',
      info:[
       {id:uid(), label:'Occasion', value:'Thursday drinks with the team, plus a few for date night.'},
@@ -1637,11 +1645,11 @@ const slug = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '
 
 function cover(l) {
   const gid = 'g' + uid();
-  const [a, b] = l.colors || ALL.colors;
+  const [a, b] = listColors(l);
   let grid = '';
-  for (let i = 1; i < 5; i++) grid += `<path d="M${i * 20} 0V100M0 ${i * 20}H100" stroke="rgba(255,255,255,.07)" stroke-width="1"/>`;
+  for (let i = 1; i < 5; i++) grid += `<path d="M${i * 20} 0V100M0 ${i * 20}H100" stroke="rgba(30,43,39,.06)" stroke-width="1"/>`;
   const head = `<svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="100" height="100" fill="url(#${gid})"/>${grid}`;
-  if (l.id === 'all') return head + `<g transform="translate(26 26) scale(2)" fill="none" stroke="#1D1503" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${ICONS.list}"/></g></svg>`;
+  if (l.id === 'all') return head + `<g transform="translate(26 26) scale(2)" fill="none" stroke="#1E2B27" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${ICONS.list}"/></g></svg>`;
   const pts = l.pins.filter(p => isPlace(p) && hasLoc(p)).map(p => proj(p.lat, p.lng));
   let shape = '';
   if (!pts.length) {
@@ -1649,8 +1657,8 @@ function cover(l) {
     const media = l.pins.filter(p => !isPlace(p)).slice(0, 6);
     if (media.length) {
       const w = 78 / media.length;
-      shape = media.map((p, i) => { const h = 34 + (itemHue(p) % 30); return `<rect x="${(11 + i * w).toFixed(1)}" y="${(84 - h).toFixed(1)}" width="${(w - 3).toFixed(1)}" height="${h}" rx="2" fill="hsl(${itemHue(p)} 45% 70%)"/>`; }).join('')
-        + '<rect x="8" y="84" width="84" height="3" rx="1.5" fill="rgba(255,255,255,.85)"/>';
+      shape = media.map((p, i) => { const h = 34 + (itemHue(p) % 30); return `<rect x="${(11 + i * w).toFixed(1)}" y="${(84 - h).toFixed(1)}" width="${(w - 3).toFixed(1)}" height="${h}" rx="2" fill="hsl(${itemHue(p)} 40% 52%)"/>`; }).join('')
+        + '<rect x="8" y="84" width="84" height="3" rx="1.5" fill="rgba(30,43,39,.7)"/>';
       return head + shape + '</svg>';
     }
   }
@@ -1659,8 +1667,8 @@ function cover(l) {
     const mx = (Math.min(...xs) + Math.max(...xs)) / 2, my = (Math.min(...ys) + Math.max(...ys)) / 2;
     const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) || 1;
     const P2 = pts.map(([x, y]) => [50 + (x - mx) / span * 62, 50 + (y - my) / span * 62]);
-    if (l.type === 'trip' && P2.length > 1) shape += `<polyline points="${P2.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
-    shape += P2.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === 0 && l.type === 'trip' ? 4.4 : 3.2}" fill="#fff"/>`).join('');
+    if (l.type === 'trip' && P2.length > 1) shape += `<polyline points="${P2.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="rgba(30,43,39,.6)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    shape += P2.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === 0 && l.type === 'trip' ? 4.4 : 3.2}" fill="#FFFCF6" stroke="#1E2B27" stroke-width="1.4"/>`).join('');
   }
   return head + shape + '</svg>';
 }
@@ -1710,7 +1718,7 @@ function rowHTML(x, i, showList) {
   ${fo ? `<button type="button" class="icon-btn row-save ${got ? 'on' : ''}" data-action="save-pin" data-id="${x.p.id}" aria-label="${got ? `${esc(x.p.name)} is in your lists. Save to another list` : `Save ${esc(x.p.name)} to my lists`}" title="${got ? 'In your lists' : 'Save to my lists'}">${icon(got ? 'check' : 'bookmark')}</button></div>` : '</button>'}`;
 }
 /* ---------- same place across lists, map previews, and the "Across PinIt" example ---------- */
-const TYPE_COLOR = {trip:'#E58A5E', guide:'#79C28A', wishlist:'#7DB4D1'};
+const TYPE_COLOR = {trip:'#A4472E', guide:'#356B43', wishlist:'#3B6A8E'};
 const normName = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 function shortArea(addr) {
   const parts = String(addr || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -1911,7 +1919,7 @@ function listHTML() {
   const ed = canEdit(l), fo = isForeign(l);
   const people = l.id === 'all' ? ['You'] : l.by ? [l.by] : fo ? [ownerName(l), ...l.collab.filter(n => n !== ownerName(l)), ...(l.role === 'viewer' ? [] : ['You'])] : ['You', ...l.collab];
   const isTrip = l.type === 'trip';
-  return `<div class="top-grad" style="--a:${l.colors[0]}">
+  return `<div class="top-grad" style="--a:${listColors(l)[1]}">
     <div class="list-hero">
       <div class="cover lg">${cover(l)}</div>
       <div class="hero-txt">
@@ -2424,7 +2432,7 @@ function syncMap() {
     V.mapKey = key; V.mapScope = scope;
     const multi = V.q || V.list === 'all';
     MAP.setPins(items.map(x => ({id:x.p.id, lat:x.p.lat, lng:x.p.lng, label:x.p.name, cat:x.p.cat, want:x.p.status === 'want', num:isTrip ? x.n : null,
-      color:multi ? x.l.colors[0] : 'var(--accent)'})), {route:isTrip && V.route, dropAll:scopeChanged && !typing, dropIds:V.dropIds});
+      color:multi ? listColors(x.l)[1] : 'var(--pin)'})), {route:isTrip && V.route, dropAll:scopeChanged && !typing, dropIds:V.dropIds});
     V.dropIds = null;
     if (scopeChanged && items.length) fitCurrent(true);
   }
@@ -2615,13 +2623,13 @@ function createSketchMap(el, h) {
 
 /* ---------- Google Maps (used when an API key is set) ---------- */
 const GSTYLE = [
-  {elementType:'geometry', stylers:[{color:'#151b23'}]},
-  {elementType:'labels.text.fill', stylers:[{color:'#8a93a1'}]},
-  {elementType:'labels.text.stroke', stylers:[{color:'#0c0f14'}]},
-  {featureType:'road', elementType:'geometry', stylers:[{color:'#222a35'}]},
-  {featureType:'road.highway', elementType:'geometry', stylers:[{color:'#2c3441'}]},
-  {featureType:'water', elementType:'geometry', stylers:[{color:'#0a1520'}]},
-  {featureType:'poi.park', elementType:'geometry', stylers:[{color:'#16241c'}]},
+  {elementType:'geometry', stylers:[{color:'#ECE6D8'}]},
+  {elementType:'labels.text.fill', stylers:[{color:'#56655E'}]},
+  {elementType:'labels.text.stroke', stylers:[{color:'#F7F2E8'}]},
+  {featureType:'road', elementType:'geometry', stylers:[{color:'#FFFDF8'}]},
+  {featureType:'road.highway', elementType:'geometry', stylers:[{color:'#F6E6D2'}]},
+  {featureType:'water', elementType:'geometry', stylers:[{color:'#C5DDE5'}]},
+  {featureType:'poi.park', elementType:'geometry', stylers:[{color:'#CFE5CF'}]},
   {featureType:'poi', elementType:'labels.icon', stylers:[{saturation:-70},{lightness:-15}]},
   {featureType:'transit', stylers:[{visibility:'simplified'}]}
 ];
@@ -2648,10 +2656,10 @@ function createGoogleMap(el, h) {
   el.innerHTML = '';
   const g = google.maps;
   const map = new g.Map(el, {center:{lat:51.51, lng:-0.1}, zoom:12, styles:GSTYLE, disableDefaultUI:true, zoomControl:true,
-    zoomControlOptions:{position:g.ControlPosition.RIGHT_BOTTOM}, clickableIcons:true, gestureHandling:'greedy', backgroundColor:'#10151C'});
+    zoomControlOptions:{position:g.ControlPosition.RIGHT_BOTTOM}, clickableIcons:true, gestureHandling:'greedy', backgroundColor:'#ECE6D8'});
   let pins = [], sel = null, temp = null, tempEl = null, drop = false;
   const els = new Map();
-  const line = new g.Polyline({map, strokeColor:'#F2B33D', strokeOpacity:.85, strokeWeight:3});
+  const line = new g.Polyline({map, strokeColor:'#256E58', strokeOpacity:.8, strokeWeight:3});
   class Layer extends g.OverlayView {
     onAdd() { this.div = document.createElement('div'); this.div.className = 'pin-layer g'; this.getPanes().overlayMouseTarget.appendChild(this.div); attach(); }
     draw() {
