@@ -567,6 +567,40 @@ h1 .pen{margin-top:-.15em}
   .toast{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 }
 @media (max-width:480px){.two{grid-template-columns:1fr}}
+/* saving from other people's lists, and the "saved in" tally on a pin */
+.save-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:42px;padding:0 16px;border-radius:999px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:14px;cursor:pointer;flex:none}
+.save-btn:hover{filter:brightness(1.06)}
+.save-btn .ic{width:17px;height:17px}
+.save-btn.saved{background:none;border-color:var(--line);color:var(--fg)}
+.save-btn.saved .ic{color:var(--accent)}
+.row.can-save,.rows-head.can-save{grid-template-columns:var(--cols) 36px}
+div.row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.row-save{color:var(--fg)}
+.row-save .ic{width:19px;height:19px}
+.row-save.on{color:var(--accent)}
+.ro-note{display:flex;align-items:flex-start;gap:9px;margin:10px 20px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--muted);font-size:12.5px;line-height:1.45}
+.ro-note .ic{width:15px;height:15px;color:var(--accent);flex:none;margin-top:1px}
+.en-rows{display:flex;flex-direction:column;gap:7px}
+.en-row{display:flex;align-items:center;gap:9px;min-width:0}
+.en-n{flex:none;min-width:30px;height:24px;padding:0 8px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font:600 12.5px var(--f-mono);color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
+.en-t{flex:none;min-width:58px;font-weight:600;font-size:13px}
+.en-row .avs{flex:none}
+.en-row .av{width:20px;height:20px;font-size:10px;border-color:var(--panel)}
+.en-who{min-width:0;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.en-add{align-self:flex-start}
+.sp-lists{display:flex;flex-direction:column;gap:2px;max-height:44vh;overflow:auto;margin:0 -8px 14px}
+.sp-row{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 8px;border:0;border-radius:10px;background:none;color:inherit;text-align:left;cursor:pointer}
+.sp-row:hover{background:var(--hover)}
+.sp-row:disabled{cursor:default;background:none}
+.sp-row:disabled .cover,.sp-row:disabled .inl-txt{opacity:.55}
+.sp-state{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--muted)}
+.sp-state .ic{width:16px;height:16px}
+.sp-row.has .sp-state{color:var(--accent)}
+@media (max-width:860px){
+  .main .can-save{grid-template-columns:22px 36px minmax(0,1fr) 22px 36px}
+  .can-save .col-date{display:none}
+  .ro-note{margin:10px 14px 0}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* ---- v2: sharing status, settings, been / want to go, days, replay, photo import, phone-first ---- */
 .sync-chip{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
@@ -946,6 +980,20 @@ function seed() {
       newItem({kind:'book', name:'The Thursday Murder Club', year:'2020', creator:'Richard Osman', by:'Priya', note:'Up next.'}),
       newItem({kind:'book', name:'Night Train to Lisbon', year:'2004', creator:'Pascal Mercier', by:'Priya', note:'Loved this. Perfect before a trip to Lisbon.'})
     ]},
+    {id:'localguide', name:'Lisbon like a local', type:'guide', vis:'public', by:'Inês', collab:[], colors:['#2F7F86','#3A2440'],
+     desc:'Where I send friends when they visit. A public guide by Inês that you can save from.',
+     info:[
+      {id:uid(), label:'Best time', value:'April to June, or late September. August is hot and crowded.'},
+      {id:uid(), label:'Getting around', value:'Walk, and take the metro for the long hops. Buy a Viva Viagem card at any station.'}
+     ], pins:[
+      P('Time Out Market Lisboa','food','Cais do Sodré',38.7069,-9.1458,{by:'Inês',note:'Touristy but good. Go at 3pm when the lunch crowd has gone.',tags:['lunch']}),
+      P('Pastéis de Belém','coffee','Belém',38.6975,-9.2032,{by:'Inês',note:'The original. Eat them warm at the counter.'}),
+      P('Miradouro da Senhora do Monte','sight','Graça',38.7193,-9.1327,{by:'Inês',note:'Come for sunrise if you can. You will have it to yourself.',tags:['view']}),
+      P('A Cevicheria','food','Príncipe Real',38.7163,-9.1487,{by:'Inês',note:'No bookings. Put your name down and have a pisco sour on the street while you wait.',tags:['dinner']}),
+      P('Feira da Ladra','shop','Alfama',38.7151,-9.1247,{by:'Inês',note:'Flea market on Tuesdays and Saturdays. Best before 10am.',tags:['market']}),
+      P('Jardim da Estrela','nature','Estrela',38.7143,-9.1594,{by:'Inês',note:'Shady park with a kiosk café. Good for a slow afternoon.'}),
+      P('Pensão Amor','drink','Cais do Sodré',38.7068,-9.1437,{by:'Inês',note:'Cocktails in an old boarding house. Gets busy after 11pm.',tags:['late night']})
+    ]},
     {id:'shoreditch', name:'Guide to Shoreditch', type:'guide', vis:'public', collab:[], colors:['#7E8A3A','#263241'],
      desc:'My favourite places around Shoreditch, for friends visiting London.',
      info:[
@@ -980,6 +1028,7 @@ const nowISO = () => { const d = new Date(); return `${d.getFullYear()}-${String
 // Sample dates for the demo lists, so each item shows a believable "added" month.
 const SAMPLE_ADDED = {
   lisbon:['2025-03-18', '2025-03-22', '2025-04-02', '2025-04-02', '2025-04-11', '2025-04-20', '2025-04-27', '2025-05-01', '2025-04-15', '2025-05-06'],
+  localguide:['2025-09-02', '2025-09-02', '2025-09-14', '2025-11-08', '2026-02-21', '2026-04-05', '2026-07-19'],
   shoreditch:['2024-06-09', '2024-06-09', '2024-09-14', '2025-01-12', '2025-02-01', '2025-05-17', '2025-08-23'],
   beers:['2026-01-15', '2026-02-26', '2026-03-04', '2026-06-11'],
   watchlist:['2026-02-10', '2026-03-28', '2026-05-03', '2026-06-19', '2026-08-21', '2026-10-02'],
@@ -995,10 +1044,10 @@ function addedLine(p) {
   const d = new Date(p.added + 'T12:00:00');
   return isNaN(d) ? `Added by ${who}` : `Added by ${who} in ${d.toLocaleDateString('en-GB', {month:'long', year:'numeric'})}`;
 }
-const addedHTML = p => `<div class="added-by">${avatar(p.by || 'You')}<span>${esc(addedLine(p))}</span></div>`;
+const addedHTML = p => `<div class="added-by">${avatar(p.by || 'You')}<span>${esc(addedLine(p))}${p.via ? `, from ${esc(p.via)}` : ''}</span></div>`;
 
 /* ---------- state ---------- */
-const SAMPLE_IDS = ['lisbon', 'shoreditch', 'beers', 'watchlist', 'bookclub'];
+const SAMPLE_IDS = ['lisbon', 'localguide', 'shoreditch', 'beers', 'watchlist', 'bookclub'];
 const EXTRA_SAMPLES = ['watchlist', 'bookclub'];
 const EXTRAS_KEY = 'pinit-extras';
 function extrasOn() { try { return localStorage.getItem(EXTRAS_KEY) !== '0'; } catch (e) { return true; } }
@@ -1047,9 +1096,17 @@ function saveLocal() {
 }
 function save() { saveLocal(); if (STORE.on) syncOut(); }
 let S = load();
+/* People who already had the example lists get the newer example guide, once. */
+let seeded3 = false;
+if (S && Array.isArray(S.lists) && !lsGet('pinit-seed-3') && S.lists.some(l => l && l.id === 'lisbon') && !S.lists.some(l => l && l.id === 'localguide')) {
+  S.lists.splice(S.lists.findIndex(l => l && l.id === 'lisbon') + 1, 0, seed().lists.find(l => l.id === 'localguide'));
+  seeded3 = true;
+}
+lsSet('pinit-seed-3', '1');
 /* Someone arriving by invite link on the hosted copy starts with just the list they were invited to. */
 if (!S || !Array.isArray(S.lists)) S = window.PINIT_CONFIG && /^#join-/.test(location.hash) ? {lists:[]} : freshSeed();
 normalise(S); stampAdded(S); stampStatus(S);
+if (seeded3) { try { localStorage.setItem(STORE_KEY, JSON.stringify({lists:S.lists.filter(l => !l.remote)})); } catch (e) {} }
 
 const V = {list:S.lists[0] ? S.lists[0].id : 'all', editLib:false, editList:false, editing:null, sel:null, detail:false, playing:false, drop:false, q:'', filter:'all', tab:'list', route:true, stFilter:'all', replay:false, rp:0, pi:null,
   delConfirm:false, mapKey:'', mapScope:'', mainScope:'', dropIds:null, photoFor:null, infoClosed:new Set(), infoOpen:new Set()};
@@ -1070,6 +1127,13 @@ function currentItems() {
   return l.pins.filter(p => f === 'all' || (p.status || '') === f).map(p => ({p, l}));
 }
 const curList = () => V.list === 'all' ? ALL : (getList(V.list) || S.lists[0] || ALL);
+/* Whose list is it, and may this person change it? A guide shared view only, and the example guide
+   written by someone else, can be read and saved from but not edited. */
+const isForeign = l => !!l && l.id !== 'all' && (!!l.by || (!!l.remote && !!l.ownerId && l.ownerId !== ME.id));
+const canEdit = l => !!l && l.id !== 'all' && !l.by && !(l.remote && l.role === 'viewer');
+const ownerName = l => l.by || (l.remote && l.ownerId ? nameOf(l.ownerId) : 'You');
+const myLists = () => S.lists.filter(canEdit);
+const itemKey = p => p.placeId || p.extId || '';
 
 /* ---------- photos kept on this device (IndexedDB, so they don't fill browser storage) ---------- */
 const IDB_URLS = new Map();
@@ -1148,7 +1212,7 @@ function photoRoom(p, l) { return l.remote && !STORE.assets ? Math.max(0, 5 - (p
 /* ---------- shared lists: a hosted store when this page runs on Claude ---------- */
 // Private lists stay in this browser. Shared lists live in the page's hosted store, one document
 // per list and one per item, so several people can add to the same trip at the same time.
-const STORE = {db:null, user:null, assets:null, on:false, kind:'', assetUrl:id => '/_blob/' + id, join:null, leave:null, canWrite:true, canKnown:null, platformName:false, state:'local',
+const STORE = {db:null, user:null, assets:null, on:false, kind:'', assetUrl:id => '/_blob/' + id, join:null, leave:null, stats:null, canWrite:true, canKnown:null, platformName:false, state:'local',
   shadow:new Map(), unsub:new Map(), names:new Map(), nicks:new Map(), queue:new Map(), qn:new Map(), pending:new Set(), warned:false};
 const NICK_KEY = 'pinit-nick', DEVICE_KEY = 'pinit-device', PRIV_KEY = 'pinit-private-notes';
 function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
@@ -1168,7 +1232,7 @@ function itemDoc(p) {
   return {kind:kindOf(p), name:p.name || '', cat:p.cat || '', area:p.area || '', lat:hasLoc(p) ? p.lat : null, lng:hasLoc(p) ? p.lng : null,
     placeId:p.placeId || '', url:p.url || '', year:p.year || '', creator:p.creator || '', cover:p.cover || '', blurb:(p.blurb || '').slice(0, 600),
     link:p.link || '', extId:p.extId || '', date:p.date || '', status:p.status || '', note:p.note || '', tags:(p.tags || []).slice(0, 12),
-    added:p.added || '', byId:p.byId || ME.id,
+    added:p.added || '', byId:p.byId || ME.id, via:(p.via || '').slice(0, 80),
     photos:(p.photos || []).map(ph => ph.kind === 'asset' ? {kind:'asset', asset:ph.asset, byId:ph.byId || ME.id}
       : ph.kind === 'sample' ? {kind:'sample', seed:ph.seed || 1}
       : ph.kind === 'img' ? {kind:'img', src:ph.src, byId:ph.byId || ME.id} : null).filter(Boolean),
@@ -1181,7 +1245,7 @@ function itemFromDoc(id, d) {
     year:str(d.year, 8), creator:str(d.creator, 120), cover:str(d.cover, 600), blurb:str(d.blurb, 600), link:str(d.link, 600), extId:str(d.extId, 120),
     date:okDay(d.date) ? d.date : '', status:d.status === 'been' || d.status === 'want' ? d.status : '', note:str(d.note, 2000),
     tags:Array.isArray(d.tags) ? d.tags.slice(0, 12).map(t => str(t, 40)).filter(Boolean) : [], added:okDay(d.added) ? d.added : ''});
-  p.byId = str(d.byId, 120);
+  p.byId = str(d.byId, 120); p.via = str(d.via, 80);
   p.photos = (Array.isArray(d.photos) ? d.photos : []).slice(0, 80).map(ph => !ph || typeof ph !== 'object' ? null
     : ph.kind === 'asset' && okAsset(ph.asset) ? {kind:'asset', asset:ph.asset, byId:str(ph.byId, 120)}
     : ph.kind === 'sample' ? {kind:'sample', seed:+ph.seed || 1}
@@ -1286,6 +1350,8 @@ function applyLists(snap) {
       info:(Array.isArray(m.info) ? m.info : []).slice(0, 30).filter(i => i && typeof i === 'object').map(i => ({id:str(i.id, 16).replace(/[^a-z0-9]/gi, '') || uid(), label:str(i.label, 60), value:str(i.value, 800)})),
       ownerId:str(m.ownerId, 120), created:str(m.created, 12)};
     const canon = JSON.stringify({...next, order});
+    const role = m._role === 'viewer' ? 'viewer' : 'editor';
+    if (l.role !== role) { l.role = role; changed = true; if (role === 'viewer' && V.list === l.id) V.editList = false; }
     if (canon !== sh.meta) changed = true;
     sh.meta = canon;
     Object.assign(l, next); l._order = order; sortPins(l); ensureSub(d.id);
@@ -1319,7 +1385,7 @@ function syncOut() {
   for (const l of S.lists) if (l.remote) for (const p of l.pins) if ((p.priv || '') !== (PRIV[p.id] || '')) setPriv(p.id, p.priv || '');
   if (!STORE.canWrite) return;
   for (const l of S.lists) {
-    if (!l.remote) continue;
+    if (!l.remote || l.role === 'viewer') continue;
     let sh = STORE.shadow.get(l.id);
     if (!sh) { sh = {meta:'', items:new Map(), loaded:true}; STORE.shadow.set(l.id, sh); STORE.pending.add(l.id); }
     if (!sh.loaded) continue;
@@ -1403,7 +1469,13 @@ async function hostedBackend() {
   async function rows(path) {
     let q;
     const m = path.match(/^lists\/([a-z0-9]+)\/items$/);
-    if (path === 'lists') q = sb.from('lists').select('id,data');
+    if (path === 'lists') {
+      /* Each list comes with this person's role on it: editor, or viewer on a view-only guide. */
+      const [a, b] = await Promise.all([sb.from('lists').select('id,data'), sb.from('list_members').select('list_id,role').eq('user_id', uid)]);
+      if (a.error) throw a.error;
+      const roles = new Map(((b && b.data) || []).map(r => [r.list_id, r.role]));
+      return a.data.map(r => ({id:r.id, data:{...r.data, _role:roles.get(r.id) || 'editor'}}));
+    }
     else if (path === 'people') q = sb.from('profiles').select('id,name');
     else if (m) q = sb.from('items').select('id,data').eq('list_id', m[1]);
     else return [];
@@ -1468,7 +1540,13 @@ async function hostedBackend() {
   return {db, user, assets,
     assetUrl:id => CFG.supabaseUrl.replace(/\/+$/, '') + '/storage/v1/object/public/photos/' + id,
     join:async id => { const ok = await rpc('join_list', {p_id:id}); refresh('lists', 0); refresh('people'); return ok === true; },
-    leave:async id => { await rpc('leave_list', {p_id:id}); refresh('lists', 0); }};
+    leave:async id => { await rpc('leave_list', {p_id:id}); refresh('lists', 0); },
+    /* How many shared lists of each type hold these items. Numbers only. */
+    stats:async keys => {
+      const out = {};
+      for (const r of (await rpc('item_stats', {p_keys:keys})) || []) { if (!r || typeof r.key !== 'string') continue; (out[r.key] = out[r.key] || {})[r.list_type] = Math.max(0, +r.n || 0); }
+      return out;
+    }};
 }
 function nameHTML() {
   return `<h2>You're in</h2><p class="sub">What should the others on the list call you?</p>
@@ -1481,9 +1559,13 @@ async function joinFromLink() {
   try {
     V.joinTarget = m[1];
     if (!(await STORE.join(m[1]))) { V.joinTarget = null; toast('That invite link no longer works.'); return; }
-    if (getList(m[1])) { V.list = m[1]; V.joinTarget = null; render(); }
+    /* Wait a moment for the list to arrive, so a view-only guest is not asked for a name they do not need. */
+    let jl = null;
+    for (let i = 0; i < 30 && !(jl = getList(m[1])); i++) await new Promise(r => setTimeout(r, 100));
+    if (jl) { V.list = m[1]; V.joinTarget = null; render(); }
     saveLocal();
-    if (!ME.name) openModal(nameHTML(), '#nickInput'); else toast('You have joined the list');
+    const viewer = !!jl && jl.role === 'viewer';
+    if (!ME.name && !viewer) openModal(nameHTML(), '#nickInput'); else toast(viewer ? `${TYPE[jl.type]} added to your lists` : 'You have joined the list');
   } catch (e) { V.joinTarget = null; toast('Could not join that list. Check your connection and open the link again.'); }
 }
 async function initStore() {
@@ -1496,7 +1578,7 @@ async function initStore() {
     try {
       const b = await hostedBackend();
       db = b.db; user = b.user; assets = b.assets;
-      Object.assign(STORE, {kind:'hosted', assetUrl:b.assetUrl, join:b.join, leave:b.leave});
+      Object.assign(STORE, {kind:'hosted', assetUrl:b.assetUrl, join:b.join, leave:b.leave, stats:b.stats});
     } catch (e) { STORE.state = 'error'; renderSync(); return; }
   } else {
     try { [db, user, assets] = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('assets')]); } catch (e) {}
@@ -1534,7 +1616,7 @@ async function initStore() {
 function avColor(name) { let h = 0; for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) | 0; return AV_COLORS[Math.abs(h) % AV_COLORS.length]; }
 const avatar = (n, t) => `<span class="av" style="--c:${avColor(n)}" title="${esc(t || n)}">${esc(String(n).charAt(0).toUpperCase())}</span>`;
 const visIcon = l => icon(l.vis === 'public' ? 'globe' : l.vis === 'shared' ? 'users' : 'lock');
-const visLabel = l => l.vis === 'public' ? 'Public' : l.vis === 'shared' ? (l.collab.length ? `Shared with ${l.collab.length}` : 'Shared') : 'Only you';
+const visLabel = l => l.vis === 'public' ? (l.remote ? 'View only' : 'Public') : l.vis === 'shared' ? (l.collab.length ? `Shared with ${l.collab.length}` : 'Shared') : 'Only you';
 const visWho = l => l.remote ? (STORE.kind === 'hosted' ? 'everyone on this list' : 'everyone you share this page with') : l.vis === 'public' ? 'anyone with the link' : l.vis === 'shared' ? ['you', ...l.collab].join(', ').replace(/, ([^,]*)$/, ' and $1') : 'only you';
 function fmtDate(iso, long) {
   if (!iso) return '';
@@ -1604,7 +1686,7 @@ function renderLibrary() {
   const total = S.lists.reduce((n, l) => n + l.pins.length, 0);
   const inner = l => `<span class="cover sm">${cover(l)}</span>
     <span class="lib-txt"><span class="lib-name">${esc(l.name)}</span>
-    <span class="lib-sub">${l.sample ? '<span class="tag-ex">Example</span>' : ''}${l.id === 'all' ? icon('list') : visIcon(l)} ${TYPE[l.type]} · ${l.id === 'all' ? total : l.pins.length} item${(l.id === 'all' ? total : l.pins.length) === 1 ? '' : 's'}</span></span>`;
+    <span class="lib-sub">${l.sample ? '<span class="tag-ex">Example</span>' : ''}${l.id === 'all' ? icon('list') : visIcon(l)} ${TYPE[l.type]} · ${isForeign(l) ? `by ${esc(ownerName(l))}` : `${l.id === 'all' ? total : l.pins.length} item${(l.id === 'all' ? total : l.pins.length) === 1 ? '' : 's'}`}</span></span>`;
   const row = l => (V.editLib && l.id !== 'all')
     ? `<div class="lib-row editing ${V.list === l.id && !V.q ? 'on' : ''}">${inner(l)}<button type="button" class="icon-btn del" data-action="delete-list" data-id="${l.id}" aria-label="Delete ${esc(l.name)}" title="Delete list">${icon('trash')}</button></div>`
     : `<button type="button" class="lib-row ${V.list === l.id && !V.q ? 'on' : ''}" data-action="open-list" data-id="${l.id}">${inner(l)}</button>`;
@@ -1617,13 +1699,15 @@ function renderLibrary() {
 function rowHTML(x, i, showList) {
   const cls = (x.p.id === V.sel ? ' sel' : '') + (x.p.id === V.sel && V.playing ? ' playing' : '');
   const n = x.p.photos.length;
-  return `<button type="button" class="row${cls}" data-action="select-pin" data-id="${x.p.id}">
+  const fo = !showList && isForeign(x.l);
+  const got = fo && savedElsewhere(x.p, x.l) > 0;
+  return `<${fo ? 'div role="button" tabindex="0"' : 'button type="button"'} class="row${fo ? ' can-save' : ''}${cls}" data-action="select-pin" data-id="${x.p.id}">
     <span class="num"><span class="n">${i + 1}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span></span>
     ${mediaThumb(x.p, 'tn')}
     <span class="ptxt"><span class="pname">${esc(x.p.name)}</span><span class="psub">${statusMark(x.p)}${!isPlace(x.p) || hasLoc(x.p) ? '' : `<span class="needs-loc">${icon('alert')} Needs location</span> · `}${showList ? esc(x.l.name) + ' · ' : ''}${esc(itemSub(x.p))}</span></span>
     <span class="col-by">${avatar(x.p.by || 'You', addedLine(x.p))}</span>
     <span class="col-date">${x.p.date ? fmtDate(x.p.date) : '<span style="color:var(--faint)">–</span>'}${n ? `<span class="pcount">${icon('camera')}${n}</span>` : ''}</span>
-  </button>`;
+  ${fo ? `<button type="button" class="icon-btn row-save ${got ? 'on' : ''}" data-action="save-pin" data-id="${x.p.id}" aria-label="${got ? `${esc(x.p.name)} is in your lists. Save to another list` : `Save ${esc(x.p.name)} to my lists`}" title="${got ? 'In your lists' : 'Save to my lists'}">${icon(got ? 'check' : 'bookmark')}</button></div>` : '</button>'}`;
 }
 /* ---------- same place across lists, map previews, and the "Across PinIt" example ---------- */
 const TYPE_COLOR = {trip:'#E58A5E', guide:'#79C28A', wishlist:'#7DB4D1'};
@@ -1641,18 +1725,75 @@ function samePlace(a, b) {
   if (!x || !y || kmApart(a, b) > 0.15) return false;
   return x === y || (x.length > 3 && y.length > 3 && (x.includes(y) || y.includes(x)));
 }
-function inListsHTML(p, curL) {
-  const hits = S.lists.map(l => ({l, q:l.pins.find(x => sameItem(x, p))})).filter(h => h.q);
-  const others = S.lists.filter(l => !hits.some(h => h.l === l));
-  const preview = String(p.id).startsWith('pv-');
-  return `<section class="d-sec"><h3>${icon('library')} In your lists${hits.length ? ` <span class="info-count">${hits.length}</span>` : ''}</h3>
-    ${hits.length ? `<div class="inlists">${hits.map(h => `<button type="button" class="inl ${curL && h.l.id === curL.id ? 'cur' : ''}" data-action="goto-pin" data-list="${h.l.id}" data-id="${h.q.id}">
-        <span class="cover xs">${cover(h.l)}</span><span class="inl-txt"><span class="inl-name">${esc(h.l.name)}</span><span class="inl-type" style="--c:${TYPE_COLOR[h.l.type] || 'var(--muted)'}">${TYPE[h.l.type]}${curL && h.l.id === curL.id ? ' · this list' : ''}</span></span></button>`).join('')}</div>`
-      : `<p class="g-empty">Not in any of your lists yet.</p>`}
-    ${others.length ? `<details class="addto" ${!hits.length ? 'open' : ''}><summary>${icon('plus')} ${hits.length ? 'Add to another list' : 'Save to a list'}</summary>
-      <div class="info-sugg">${others.map(l => `<button type="button" class="chip" data-action="${preview ? 'save-preview' : 'copy-to-list'}" data-id="${p.id}" data-list="${l.id}"><i class="type-dot" style="--c:${TYPE_COLOR[l.type]}"></i>${esc(l.name)}</button>`).join('')}</div></details>`
-      : !S.lists.length ? `<button type="button" class="pill sm" data-action="new-list">${icon('plus')} Create a list</button>` : ''}
+/* ---------- saving someone else's pin to your own lists, and how many lists a pin is in ---------- */
+const GSTATS = new Map();
+const LAST_SAVE = 'pinit-last-save';
+function listHits(p) { return S.lists.map(l => ({l, q:l.pins.find(x => sameItem(x, p))})).filter(h => h.q); }
+const savedElsewhere = (p, l) => myLists().filter(x => x !== l && x.pins.some(q => sameItem(q, p))).length;
+/* The main button on a pin from somebody else's list, and on a place picked from the map. */
+function saveBtnHTML(p, l) {
+  if (l && !isForeign(l)) return '';
+  const n = savedElsewhere(p, l);
+  return `<button type="button" class="save-btn ${n ? 'saved' : ''}" data-action="save-pin" data-id="${p.id}">${icon(n ? 'check' : 'bookmark')} ${n ? `Saved in ${n} of your lists` : 'Save to my lists'}</button>`;
+}
+/* Counts come from every list this person can see. The hosted site adds a count of other shared lists. */
+async function loadStats(key) {
+  GSTATS.set(key, null);
+  try { const r = await STORE.stats([key]); GSTATS.set(key, {ok:true, ...(r[key] || {})}); } catch (e) { GSTATS.set(key, {ok:false}); }
+  const el = $('#endorse'); if (!el || el.dataset.key !== key) return;
+  const f = V.sel && findPin(V.sel);
+  if (f) el.outerHTML = savedInHTML(f.p, f.l); else if (V.preview) el.outerHTML = savedInHTML(V.preview, null);
+}
+function whoText(who, more) {
+  const names = who.slice(0, 2).map(n => n === 'You' ? 'you' : n);
+  const rest = who.length - names.length + more;
+  if (!names.length) return '';
+  return 'by ' + (rest ? `${names.join(', ')} and ${rest} more` : names.join(' and '));
+}
+function savedInHTML(p, curL) {
+  const hits = listHits(p); const key = itemKey(p);
+  if (key && STORE.stats && !GSTATS.has(key)) loadStats(key);
+  const g = key ? GSTATS.get(key) : null;
+  const word = {trip:['trip', 'trips'], guide:['guide', 'guides'], wishlist:['wishlist', 'wishlists']};
+  const rows = ['trip', 'guide', 'wishlist'].map(t => {
+    const vis = hits.filter(h => h.l.type === t);
+    const n = g && g.ok ? Math.max(vis.length, (g[t] || 0) + vis.filter(h => !h.l.remote).length) : vis.length;
+    return {t, n, who:[...new Set(vis.map(h => ownerName(h.l)))], more:n - vis.length};
+  }).filter(r => r.n);
+  const total = rows.reduce((a, r) => a + r.n, 0);
+  return `<section class="d-sec endorse" id="endorse" data-key="${esc(key)}"><h3>${icon('library')} Saved in ${total === 1 ? '1 list' : total ? total + ' lists' : 'lists'}</h3>
+    ${total ? `<div class="en-rows">${rows.map(r => `<div class="en-row" style="--c:${TYPE_COLOR[r.t]}"><b class="en-n">${r.n}</b><span class="en-t">${word[r.t][r.n === 1 ? 0 : 1]}</span>${r.who.length ? `<span class="avs">${r.who.slice(0, 4).map(n => avatar(n)).join('')}</span>` : ''}<span class="en-who">${esc(whoText(r.who, r.more))}</span></div>`).join('')}</div>`
+      : '<p class="g-empty">Not saved in any list yet.</p>'}
+    ${hits.length ? `<details class="addto"><summary>${icon('chev')} ${hits.length === total ? 'See the lists' : 'See the lists you can open'}</summary>
+      <div class="inlists" style="margin-top:6px">${hits.map(h => `<button type="button" class="inl ${curL && h.l.id === curL.id ? 'cur' : ''}" data-action="goto-pin" data-list="${h.l.id}" data-id="${h.q.id}">
+        <span class="cover xs">${cover(h.l)}</span><span class="inl-txt"><span class="inl-name">${esc(h.l.name)}</span><span class="inl-type" style="--c:${TYPE_COLOR[h.l.type] || 'var(--muted)'}">${TYPE[h.l.type]} by ${esc(ownerName(h.l) === 'You' ? 'you' : ownerName(h.l))}${curL && h.l.id === curL.id ? ' · this list' : ''}</span></span></button>`).join('')}</div></details>` : ''}
+    ${curL && !isForeign(curL) ? `<button type="button" class="pill sm en-add" data-action="save-pin" data-id="${p.id}">${icon('plus')} Add to another list</button>` : ''}
   </section>`;
+}
+function savePickHTML() {
+  const sp = V.savePick; const p = sp.item; const last = lsGet(LAST_SAVE);
+  const lists = myLists().filter(l => l !== sp.from).sort((a, b) => (b.id === last) - (a.id === last));
+  return `<h2>Save “${esc(p.name || 'this spot')}”</h2><p class="sub">${lists.length ? 'Choose which of your lists to save it to.' : 'Start a list of your own to save it to.'}${sp.from && isForeign(sp.from) ? ` From ${esc(sp.from.name)}.` : ''}</p>
+    ${lists.length ? `<div class="sp-lists">${lists.map(l => { const has = l.pins.some(q => sameItem(q, p)); return `<button type="button" class="sp-row ${has ? 'has' : ''}" data-action="save-to" data-list="${l.id}" ${has ? 'disabled' : ''}>
+      <span class="cover xs">${cover(l)}</span><span class="inl-txt"><span class="inl-name">${esc(l.name)}</span><span class="inl-type" style="--c:${TYPE_COLOR[l.type]}">${TYPE[l.type]} · ${l.pins.length} item${l.pins.length === 1 ? '' : 's'}</span></span>
+      <span class="sp-state">${has ? icon('check') + ' Saved' : icon('plus')}</span></button>`; }).join('')}</div>` : ''}
+    <form class="invite" data-form="save-new"><input id="spNew" name="name" required placeholder="${lists.length ? 'Or start a new list' : 'Name your list'}" maxlength="60" autocomplete="off" aria-label="New list name"><button class="pill sm" type="submit">${icon('plus')} Create and save</button></form>
+    <div class="m-actions"><button type="button" class="ghost" data-action="modal-close">Cancel</button></div>`;
+}
+function saveTo(listId) {
+  const sp = V.savePick; const l = getList(listId); if (!sp || !l || !canEdit(l)) return;
+  lsSet(LAST_SAVE, l.id); V.savePick = null;
+  if (sp.preview) { closeModal(); ACTIONS['save-preview']({dataset:{list:l.id}}); return; }
+  const p = sp.item;
+  if (l.pins.some(q => sameItem(q, p))) { closeModal(); return; }
+  const copy = newItem({kind:kindOf(p), name:p.name, cat:p.cat, area:p.area, lat:p.lat, lng:p.lng, placeId:p.placeId || null, url:p.url,
+    year:p.year || '', creator:p.creator || '', cover:p.cover || '', blurb:p.blurb || '', link:p.link || '', extId:p.extId || '', tags:[...(p.tags || [])],
+    added:nowISO(), status:l.type === 'wishlist' ? 'want' : '', via:sp.from && isForeign(sp.from) ? sp.from.name : ''});
+  l.pins.push(copy);
+  const k = itemKey(p); if (k) GSTATS.delete(k);
+  const redraw = () => { save(); renderLibrary(); renderMain(); renderDetail(); renderMapTools(); syncMap(); };
+  closeModal(); redraw();
+  toast(`Saved to ${l.name}`, () => { const i = l.pins.indexOf(copy); if (i >= 0) l.pins.splice(i, 1); if (V.sel === copy.id) { V.sel = null; V.detail = false; } redraw(); });
 }
 function strHash(s) { let h = 2166136261; for (const ch of String(s)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function communityHTML(p) {
@@ -1670,7 +1811,7 @@ function communityHTML(p) {
     for (const m of x.memories || []) add(m.by, l.name, m.text);
   }
   if (!rows.size) return '';
-  return `<section class="d-sec community"><h3>${icon('users')} From people you share with</h3>
+  return `<section class="d-sec community"><h3>${icon('users')} Notes from other lists</h3>
     ${[...rows].slice(0, 5).map(([who, r]) => `<div class="memory">${avatar(who)}<div><strong>${esc(who)}</strong> <span class="muted" style="font-size:12.5px">in ${esc([...r.lists].slice(0, 2).join(', '))}</span>${r.note ? `<p>${esc(r.note)}</p>` : ''}</div></div>`).join('')}
   </section>`;
 }
@@ -1681,7 +1822,8 @@ function previewHTML(pv) {
     <h2 class="d-name">${esc(pv.name || 'This spot')}</h2>
     ${pv.type || pv.area ? `<div class="d-meta">${pv.type ? `<span class="cat-chip" style="--c:${c.color}">${icon(c.icon)} ${esc(pv.type)}</span>` : ''}${pv.area ? `<span>${esc(pv.area)}</span>` : ''}</div>` : ''}
     <div class="coords">${pv.lat.toFixed(5)}, ${pv.lng.toFixed(5)}</div>
-    ${inListsHTML(pv, null)}
+    ${saveBtnHTML(pv, null)}
+    ${savedInHTML(pv, null)}
     ${near.length ? `<section class="d-sec"><h3>${icon('pin')} Nearby in your lists</h3><div class="inlists">${near.map(x => `<button type="button" class="inl" data-action="goto-pin" data-list="${x.l.id}" data-id="${x.p.id}"><span class="ptile sm" style="--c:${cat(x.p.cat).color}">${icon(cat(x.p.cat).icon)}</span><span class="inl-txt"><span class="inl-name">${esc(x.p.name)}</span><span class="inl-type" style="--c:var(--muted)">${esc(x.l.name)} · ${Math.round(kmApart(x.p, pv) * 1000)} m</span></span></button>`).join('')}</div></section>` : ''}
     ${pv.name ? `<section class="g-info" id="gInfo" data-id="${pv.id}">${gInfoHTML(pv)}</section>` : ''}
     ${communityHTML(pv)}`;
@@ -1727,7 +1869,7 @@ function editRowHTML(x) {
   </div>`;
 }
 function removePin(id) {
-  const f = findPin(id); if (!f) return;
+  const f = findPin(id); if (!f || !canEdit(f.l)) return;
   const {p, l} = f; const idx = l.pins.indexOf(p);
   l.pins.splice(idx, 1); GCACHE.delete(p.id);
   if (V.sel === id) { V.sel = null; V.detail = false; stopPlay(); }
@@ -1738,6 +1880,16 @@ function removePin(id) {
 function removeList(id) {
   const idx = S.lists.findIndex(l => l.id === id); if (idx < 0) return;
   const l = S.lists[idx];
+  if (l.remote && l.ownerId && l.ownerId !== ME.id) {
+    if (!STORE.leave) { toast('Only the person who created this list can delete it.'); return; }
+    STORE.leave(l.id).then(() => {
+      dropRemote(l.id); const i = S.lists.indexOf(l); if (i >= 0) S.lists.splice(i, 1);
+      if (V.list === l.id) { V.list = 'all'; V.sel = null; V.detail = false; V.editList = false; }
+      if (!S.lists.length) V.editLib = false;
+      render(); toast(`You have left ${l.name}`);
+    }, () => toast('Could not leave the list. Try again.'));
+    return;
+  }
   S.lists.splice(idx, 1); stopPlay();
   if (V.sel && l.pins.some(p => p.id === V.sel)) { V.sel = null; V.detail = false; }
   if (V.list === id) { V.list = 'all'; V.editList = false; }
@@ -1756,38 +1908,41 @@ function commitOrder() {
 function listHTML() {
   const l = curList(); const items = currentItems();
   const range = dateRange(items);
-  const people = l.id === 'all' ? ['You'] : ['You', ...l.collab];
+  const ed = canEdit(l), fo = isForeign(l);
+  const people = l.id === 'all' ? ['You'] : l.by ? [l.by] : fo ? [ownerName(l), ...l.collab.filter(n => n !== ownerName(l)), ...(l.role === 'viewer' ? [] : ['You'])] : ['You', ...l.collab];
   const isTrip = l.type === 'trip';
   return `<div class="top-grad" style="--a:${l.colors[0]}">
     <div class="list-hero">
       <div class="cover lg">${cover(l)}</div>
       <div class="hero-txt">
-        <div class="eyebrow">${l.sample ? '<span class="tag-ex">Example</span>' : ''}${TYPE[l.type]}${l.id !== 'all' ? ` <span class="dot" style="opacity:.6">·</span> ${visIcon(l)} ${visLabel(l)}` : ''}</div>
+        <div class="eyebrow">${l.sample ? '<span class="tag-ex">Example</span>' : ''}${TYPE[l.type]}${l.id !== 'all' ? ` <span class="dot" style="opacity:.6">·</span> ${visIcon(l)} ${visLabel(l)}${fo ? ` <span class="dot" style="opacity:.6">·</span> by ${esc(ownerName(l))}` : ''}` : ''}</div>
         ${l.id !== 'all' && V.editing === 'name'
           ? `<input id="lnInput" class="ed-title" value="${esc(l.name)}" maxlength="60" aria-label="List name">`
-          : `<h1>${esc(l.name)}${l.id !== 'all' ? `<button type="button" class="pen" data-action="edit-list-field" data-f="name" aria-label="Rename list" title="Rename">${icon('edit')}</button>` : ''}</h1>`}
+          : `<h1>${esc(l.name)}${ed ? `<button type="button" class="pen" data-action="edit-list-field" data-f="name" aria-label="Rename list" title="Rename">${icon('edit')}</button>` : ''}</h1>`}
         ${l.id !== 'all' && V.editing === 'desc'
           ? `<textarea id="ldInput" class="ed-desc" rows="2" maxlength="160" placeholder="What is this list for?" aria-label="List description">${esc(l.desc || '')}</textarea><span class="ed-hint">Enter to save · Esc to cancel</span>`
-          : l.desc ? `<p class="desc">${esc(l.desc)}${l.id !== 'all' ? `<button type="button" class="pen" data-action="edit-list-field" data-f="desc" aria-label="Edit description" title="Edit description">${icon('edit')}</button>` : ''}</p>`
-          : l.id !== 'all' ? `<button type="button" class="add-desc" data-action="edit-list-field" data-f="desc">${icon('edit')} Add a description</button>` : ''}
-        <div class="meta"><span class="avs">${people.map(n => avatar(n)).join('')}</span><span>${esc(people.join(', '))}</span>${l.id !== 'all' ? `<button type="button" class="pen" data-action="edit-people" aria-label="Edit contributors" title="Add or remove people">${icon('edit')}</button>` : ''}<span class="dot">•</span><span>${items.length} item${items.length === 1 ? '' : 's'}</span>${range ? `<span class="dot">•</span><span>${range}</span>` : ''}</div>
+          : l.desc ? `<p class="desc">${esc(l.desc)}${ed ? `<button type="button" class="pen" data-action="edit-list-field" data-f="desc" aria-label="Edit description" title="Edit description">${icon('edit')}</button>` : ''}</p>`
+          : ed ? `<button type="button" class="add-desc" data-action="edit-list-field" data-f="desc">${icon('edit')} Add a description</button>` : ''}
+        <div class="meta"><span class="avs">${people.map(n => avatar(n)).join('')}</span><span>${esc(people.join(', '))}</span>${ed ? `<button type="button" class="pen" data-action="edit-people" aria-label="Edit contributors" title="Add or remove people">${icon('edit')}</button>` : ''}<span class="dot">•</span><span>${items.length} item${items.length === 1 ? '' : 's'}</span>${range ? `<span class="dot">•</span><span>${range}</span>` : ''}</div>
       </div>
     </div>
     <div class="actions">
       <button type="button" class="play-big" data-action="play-toggle" aria-label="${V.playing ? 'Pause' : (isTrip ? 'Replay the trip' : 'Tour the list')}" title="${isTrip ? 'Replay the trip pin by pin' : 'Tour the list pin by pin'}" ${items.length ? '' : 'disabled'}>${icon(V.playing ? 'pause' : 'play')}</button>
       <button type="button" class="icon-btn lg" data-action="shuffle" title="Surprise me" aria-label="Surprise me">${icon('shuffle')}</button>
-      ${l.id !== 'all' ? `<button type="button" class="pill" data-action="share">${icon('share')} Share</button>` : ''}
-      <button type="button" class="pill" data-action="add-item">${icon('plus')} Add</button>
-      ${l.id !== 'all' && items.length ? `<button type="button" class="pill ${V.editList ? 'primary' : ''}" data-action="list-edit" aria-pressed="${V.editList}">${V.editList ? `${icon('check')} Done` : `${icon('edit')} Edit`}</button>` : ''}
+      ${l.id !== 'all' && !l.by ? `<button type="button" class="pill" data-action="share">${icon('share')} Share</button>` : ''}
+      ${ed || l.id === 'all' ? `<button type="button" class="pill" data-action="add-item">${icon('plus')} Add</button>` : ''}
+      ${ed && items.length ? `<button type="button" class="pill ${V.editList ? 'primary' : ''}" data-action="list-edit" aria-pressed="${V.editList}">${V.editList ? `${icon('check')} Done` : `${icon('edit')} Edit`}</button>` : ''}
     </div>
   </div>
+  ${l.id !== 'all' && !ed ? `<p class="ro-note">${icon('bookmark')}<span>View only. Tap the bookmark next to anything to save it to one of your own lists.</span></p>` : ''}
   ${infoCardHTML(l)}
   ${statusFilterHTML(l)}
-  ${V.editList && l.id !== 'all' && items.length
+  ${V.editList && ed && items.length
     ? `<div class="rows-head edit-hint">${icon('updown')} Drag the arrows to change the order. Tap the bin to remove a pin.</div>`
-    : `<div class="rows-head"><span>#</span><span></span><span>Item</span><span class="col-by" title="Added by">By</span><span class="col-date">Date</span></div>`}
+    : `<div class="rows-head${fo ? ' can-save' : ''}"><span>#</span><span></span><span>Item</span><span class="col-by" title="Added by">By</span><span class="col-date">Date</span>${fo ? '<span></span>' : ''}</div>`}
   <div class="rows">${items.length ? rowsHTML(l, items)
     : V.stFilter !== 'all' && l.id !== 'all' ? `<div class="empty">${icon('list')}<span>Nothing in this list is marked that way yet.</span></div>`
+    : l.id !== 'all' && !ed ? `<div class="empty">${icon('list')}<span>Nothing in this list yet.</span></div>`
     : `<div class="empty">${icon('list')}<span>${extrasOn() ? 'Nothing here yet. Add a place, a film, a book or anything else.' : 'Nothing here yet. Add your first place.'}</span><button type="button" class="pill primary" data-action="add-item">${icon('plus')} Add the first item</button>${l.type === 'trip' ? `<button type="button" class="pill" data-action="photo-import">${icon('photos')} Import trip photos</button>` : ''}</div>`}</div>`;
 }
 /* ---------- list-wide info (trip essentials, guide and wishlist notes) ---------- */
@@ -1815,14 +1970,15 @@ function linkify(s) {
 }
 function infoCardHTML(l) {
   const cfg = INFO_CFG[l.type]; if (!cfg || l.id === 'all') return '';
-  const items = l.info || [];
+  const items = l.info || []; const ed = canEdit(l);
+  if (!items.length && !ed) return '';
   return `<details class="info-card" data-list="${l.id}" ${V.infoOpen.has(l.id) || (!isMobile() && !V.infoClosed.has(l.id)) ? 'open' : ''}>
     <summary class="info-head">${icon('info')}<span>${cfg.title}</span>${items.length ? `<span class="info-count">${items.length}</span>` : ''}<span class="info-chev">${icon('chev')}</span></summary>
     <div class="info-body">
       ${items.length
         ? `<dl class="info-list">${items.map(it => { const u = firstUrl(it.value); return `<div class="info-row"><dt>${esc(it.label)}</dt><dd><span class="info-val">${linkify(it.value)}</span>${u ? `<button type="button" class="icon-btn xs" data-action="copy-text" data-text="${esc(u)}" aria-label="Copy link" title="Copy link">${icon('copy')}</button>` : ''}</dd></div>`; }).join('')}</dl>`
         : `<p class="info-empty">${cfg.empty}</p><div class="info-sugg">${cfg.sugg.slice(0, 4).map(s => `<button type="button" class="chip" data-action="info-edit" data-id="${l.id}" data-add="${esc(s)}">+ ${esc(s)}</button>`).join('')}</div>`}
-      <div class="info-foot"><span>${l.type === 'trip' ? 'Organiser: You. ' : ''}${cfg.sub}.</span><button type="button" class="pill sm" data-action="info-edit" data-id="${l.id}">${icon('edit')} ${items.length ? 'Edit' : 'Add details'}</button></div>
+      <div class="info-foot"><span>${l.type === 'trip' ? `Organiser: ${esc(ownerName(l))}. ` : ''}${cfg.sub}.</span>${ed ? `<button type="button" class="pill sm" data-action="info-edit" data-id="${l.id}">${icon('edit')} ${items.length ? 'Edit' : 'Add details'}</button>` : ''}</div>
     </div>
   </details>`;
 }
@@ -1872,7 +2028,7 @@ function searchHTML() {
 function renderMain() {
   const m = $('#main'); const scope = V.q ? 'q:' + V.q : V.list; const st = m.scrollTop;
   m.innerHTML = V.q ? searchHTML() : listHTML();
-  if (scope === V.mainScope) m.scrollTop = st;
+  m.scrollTop = scope === V.mainScope ? st : 0;
   V.mainScope = scope;
 }
 function sameItem(a, b) {
@@ -1899,12 +2055,13 @@ function mediaDetailHTML(p, l) {
         ${p.year || p.creator ? `<div class="m-meta">${[p.year, p.creator].filter(Boolean).map(esc).join(' · ')}</div>` : ''}
         ${p.date ? `<div class="m-meta">${doneWord} ${fmtDate(p.date, true)}</div>` : ''}</div></div>
     ${p.blurb ? `<p class="g-summary m-blurb">${esc(p.blurb)}</p>` : ''}
-    ${statusSeg(p)}
+    ${saveBtnHTML(p, l)}
+    ${canEdit(l) ? statusSeg(p) : ''}
     ${addedHTML(p)}
-    ${inListsHTML(p, l)}
+    ${savedInHTML(p, l)}
     <section class="d-sec"><h3>${icon('users')} Notes <span class="vis-tag">Seen by ${esc(visWho(l))}</span></h3>
       ${[...(p.note ? [{by:p.by || 'You', text:p.note}] : []), ...p.memories].map(m => `<div class="memory">${avatar(m.by)}<div><strong>${esc(m.by)}</strong><p>${esc(m.text).replace(/\n/g, '<br>')}</p></div></div>`).join('') || '<p class="muted" style="font-size:13px">No notes yet.</p>'}
-      <form class="mem-form" data-form="memory" data-id="${p.id}"><input id="memInput" name="m" placeholder="Add a note" autocomplete="off" maxlength="240" aria-label="Add a note"><button class="icon-btn" type="submit" aria-label="Add note">${icon('plus')}</button></form>
+      ${canEdit(l) ? `<form class="mem-form" data-form="memory" data-id="${p.id}"><input id="memInput" name="m" placeholder="Add a note" autocomplete="off" maxlength="240" aria-label="Add a note"><button class="icon-btn" type="submit" aria-label="Add note">${icon('plus')}</button></form>` : ''}
     </section>
     <section class="d-sec private"><h3>${icon('lock')} Private note <span class="vis-tag">Only you</span></h3>
       <textarea id="privNote" data-id="${p.id}" rows="2" placeholder="Anything you want to remember but not share" aria-label="Private note">${esc(p.priv)}</textarea></section>
@@ -1914,16 +2071,16 @@ function mediaDetailHTML(p, l) {
     <div class="d-actions">
       ${src ? `<a class="pill sm" href="${esc(src)}" target="_blank" rel="noopener">${icon('ext')} ${srcLabel}</a>` : ''}
       ${k === 'film' || k === 'tv' ? `<a class="pill sm" href="${esc(watch)}" target="_blank" rel="noopener">${icon('tv')} Where to watch</a>` : ''}
-      <button type="button" class="pill sm" data-action="edit-pin" data-id="${p.id}">${icon('edit')} Edit</button>
-      <button type="button" class="pill sm danger" data-action="delete-pin" data-id="${p.id}">${icon('trash')} Delete</button>
+      ${canEdit(l) ? `<button type="button" class="pill sm" data-action="edit-pin" data-id="${p.id}">${icon('edit')} Edit</button>` : ''}
+      ${canEdit(l) ? `<button type="button" class="pill sm danger" data-action="delete-pin" data-id="${p.id}">${icon('trash')} Delete</button>` : ''}
     </div>`;
 }
 
 /* ---------- adding films, shows, books and anything else ---------- */
 let addT = 0, addSeq = 0;
 function openAdd(kind) {
-  if (!S.lists.length) { openModal(newListHTML(), '#nlName'); toast('Create a list first.'); return; }
-  const def = V.list !== 'all' && getList(V.list) ? V.list : S.lists[0].id;
+  if (!myLists().length) { openModal(newListHTML(), '#nlName'); toast('Create a list first.'); return; }
+  const def = V.list !== 'all' && canEdit(getList(V.list)) ? V.list : myLists()[0].id;
   V.add = {listId:def, kind:kind || 'place', q:'', status:'idle', results:[], note:'', added:new Set()};
   openModal(addHTML(), V.add.kind === 'other' ? '#miTitle-other' : '#addQ');
 }
@@ -1965,7 +2122,7 @@ function addHTML() {
     <details class="addto add-manual"><summary>${icon('edit')} Add it by hand</summary>${manualForm(a.kind)}</details>`;
   return `<h2>Add to a list</h2>
     <div class="kind-seg" role="group" aria-label="What are you adding?">${kinds.map(k => `<button type="button" class="kind-btn ${a.kind === k ? 'on' : ''}" data-action="add-kind" data-k="${k}" aria-pressed="${a.kind === k}" style="--c:${KINDS[k].color}">${icon(KINDS[k].icon)}<span>${KINDS[k].label}</span></button>`).join('')}<button type="button" class="kind-btn" data-action="photo-import" style="--c:var(--accent)">${icon('photos')}<span>Trip photos</span></button></div>
-    <label class="fld"><span>Add to</span><select id="addList">${S.lists.map(x => `<option value="${x.id}" ${x.id === a.listId ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
+    <label class="fld"><span>Add to</span><select id="addList">${myLists().map(x => `<option value="${x.id}" ${x.id === a.listId ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
     ${body}
     <div class="m-actions"><button type="button" class="ghost" data-action="modal-close">Done</button></div>`;
 }
@@ -2040,11 +2197,12 @@ function updateRowsSel() {
 }
 function photoBy(ph, l, i) {
   if (ph.by) return ph.by;
-  const people = ['You', ...((l && l.collab) || [])];
+  const people = l && l.by ? [l.by] : ['You', ...((l && l.collab) || [])];
   return people[((ph.seed || 0) + i) % people.length];
 }
 function photosSecHTML(p, l) {
   const n = p.photos.length;
+  if (!n && !canEdit(l)) return '';
   const mine = p.photos.filter((ph, i) => photoBy(ph, l, i) === 'You').length;
   const group = n - mine;
   const tally = !n ? 'None yet' : (l.collab && l.collab.length) ? `${mine} yours${group ? `, ${group} from the group` : ''}` : `${n} photo${n === 1 ? '' : 's'}`;
@@ -2053,7 +2211,7 @@ function photosSecHTML(p, l) {
     <div class="ph-strip">
       ${p.photos.slice(0, show).map((ph, i) => { const by = photoBy(ph, l, i); return `<button type="button" class="ph-thumb" data-action="view-photo" data-id="${p.id}" data-i="${i}" aria-label="Photo ${i + 1} of ${n}, added by ${esc(by)}">${photoHTML(ph)}<span class="ph-by">${avatar(by)}</span></button>`; }).join('')}
       ${n > show ? `<button type="button" class="ph-thumb ph-more" data-action="view-photo" data-id="${p.id}" data-i="${show}" aria-label="See all ${n} photos">+${n - show}</button>` : ''}
-      <button type="button" class="ph-thumb ph-add" data-action="add-photo" data-id="${p.id}" aria-label="Add photos" title="Add photos">${icon('plus')}</button>
+      ${canEdit(l) ? `<button type="button" class="ph-thumb ph-add" data-action="add-photo" data-id="${p.id}" aria-label="Add photos" title="Add photos">${icon('plus')}</button>` : ''}
     </div></section>`;
 }
 function openPhotoViewer(id, i) {
@@ -2078,13 +2236,14 @@ function renderDetail() {
     <h2 class="d-name">${esc(p.name)}</h2>
     <div class="d-meta"><span class="cat-chip" style="--c:${c.color}">${icon(c.icon)} ${c.label}</span>${p.area ? `<span>${esc(p.area)}</span>` : ''}${p.date ? `<span>${fmtDate(p.date, true)}</span>` : ''}</div>
     ${hasLoc(p) ? `<div class="coords">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</div>`
-      : `<div class="private" style="display:flex;align-items:center;gap:10px;justify-content:space-between"><span class="needs-loc">${icon('alert')} Not on the map yet</span><button type="button" class="pill sm primary" data-action="place-pin" data-id="${p.id}">${icon('pin')} Place on map</button></div>`}
-    ${statusSeg(p)}
+      : `<div class="private" style="display:flex;align-items:center;gap:10px;justify-content:space-between"><span class="needs-loc">${icon('alert')} Not on the map yet</span>${canEdit(l) ? `<button type="button" class="pill sm primary" data-action="place-pin" data-id="${p.id}">${icon('pin')} Place on map</button>` : ''}</div>`}
+    ${saveBtnHTML(p, l)}
+    ${canEdit(l) ? statusSeg(p) : ''}
     ${addedHTML(p)}
-    ${inListsHTML(p, l)}
+    ${savedInHTML(p, l)}
     <section class="d-sec"><h3>${icon('users')} Notes <span class="vis-tag">Seen by ${esc(visWho(l))}</span></h3>
       ${[...(p.note ? [{by:p.by || 'You', text:p.note}] : []), ...p.memories].map(m => `<div class="memory">${avatar(m.by)}<div><strong>${esc(m.by)}</strong><p>${esc(m.text).replace(/\n/g, '<br>')}</p></div></div>`).join('') || '<p class="muted" style="font-size:13px">No notes yet.</p>'}
-      <form class="mem-form" data-form="memory" data-id="${p.id}"><input id="memInput" name="m" placeholder="Add a note" autocomplete="off" maxlength="240" aria-label="Add a note"><button class="icon-btn" type="submit" aria-label="Add note">${icon('plus')}</button></form>
+      ${canEdit(l) ? `<form class="mem-form" data-form="memory" data-id="${p.id}"><input id="memInput" name="m" placeholder="Add a note" autocomplete="off" maxlength="240" aria-label="Add a note"><button class="icon-btn" type="submit" aria-label="Add note">${icon('plus')}</button></form>` : ''}
     </section>
     <section class="d-sec private"><h3>${icon('lock')} Private note <span class="vis-tag">Only you</span></h3>
       <textarea id="privNote" data-id="${p.id}" rows="2" placeholder="Anything you want to remember but not share" aria-label="Private note">${esc(p.priv)}</textarea></section>
@@ -2094,8 +2253,8 @@ function renderDetail() {
     ${photosSecHTML(p, l)}
     <div class="d-actions">
       <a class="pill sm" href="${esc(GCACHE.get(p.id)?.data?.gmaps ? GCACHE.get(p.id).data.gmaps : /^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl)/.test(p.url || '') ? p.url :'https://www.google.com/maps/search/?api=1&query=' + (hasLoc(p) ? p.lat + ',' + p.lng : encodeURIComponent(p.name)))}" target="_blank" rel="noopener">${icon('ext')} Google Maps</a>
-      <button type="button" class="pill sm" data-action="edit-pin" data-id="${p.id}">${icon('edit')} Edit</button>
-      <button type="button" class="pill sm danger ${V.delConfirm ? 'armed' : ''}" data-action="delete-pin" data-id="${p.id}">${icon('trash')} ${V.delConfirm ? 'Tap again to delete' : 'Delete'}</button>
+      ${canEdit(l) ? `<button type="button" class="pill sm" data-action="edit-pin" data-id="${p.id}">${icon('edit')} Edit</button>` : ''}
+      ${canEdit(l) ? `<button type="button" class="pill sm danger ${V.delConfirm ? 'armed' : ''}" data-action="delete-pin" data-id="${p.id}">${icon('trash')} ${V.delConfirm ? 'Tap again to delete' : 'Delete'}</button>` : ''}
     </div>`;
 }
 /* ---------- live details from Google (only while Google Maps is connected) ---------- */
@@ -2202,12 +2361,13 @@ function renderNav() {
 function renderMapTools() {
   const isTrip = !V.q && V.list !== 'all' && curList().type === 'trip';
   const mode = viewMode(); const mix = viewMix();
+  const ro = !V.q && V.list !== 'all' && !canEdit(curList());
   const toggle = mix.places && mix.media ? `<span class="seg-toggle" role="group" aria-label="View">
       <button type="button" class="${mode === 'map' ? 'on' : ''}" data-action="set-view" data-v="map" aria-pressed="${mode === 'map'}">${icon('map')} Map</button>
       <button type="button" class="${mode === 'shelf' ? 'on' : ''}" data-action="set-view" data-v="shelf" aria-pressed="${mode === 'shelf'}">${icon('grid')} Shelf</button></span>` : '';
   $('#mapTools').innerHTML = mode === 'shelf'
-    ? `<button type="button" class="pill primary" data-action="add-item">${icon('plus')} Add</button>${toggle}`
-    : `<button type="button" class="pill primary" data-action="add-pin">${icon('plus')} Add place</button>`
+    ? `${ro ? '' : `<button type="button" class="pill primary" data-action="add-item">${icon('plus')} Add</button>`}${toggle}`
+    : (ro ? '' : `<button type="button" class="pill primary" data-action="add-pin">${icon('plus')} Add place</button>`)
       + `<button type="button" class="pill" data-action="fit-map" aria-label="Fit map to pins" title="Fit map to pins">${icon('fit')}</button>`
       + (isTrip && mix.places ? `<button type="button" class="pill ${V.route ? 'on' : ''}" data-action="toggle-route" aria-pressed="${V.route}" title="Show the route between stops">${icon('route')} Route</button>` : '')
       + toggle;
@@ -2758,7 +2918,7 @@ function statusFilterHTML(l) {
 }
 /* Trips group their stops by day. */
 function rowsHTML(l, items) {
-  const edit = V.editList && l.id !== 'all';
+  const edit = V.editList && canEdit(l);
   const days = l.type === 'trip' && !edit && l.id !== 'all' ? [...new Set(items.map(x => x.p.date).filter(Boolean))].sort() : [];
   let last = null;
   return items.map((x, i) => {
@@ -2916,7 +3076,7 @@ async function analysePhotos(fileList) {
   found.sort((a, b) => (a.t ? a.t.getTime() : Infinity) - (b.t ? b.t.getTime() : Infinity));
   const stops = clusterPhotos(found);
   const cur = V.list !== 'all' ? getList(V.list) : null;
-  const pi = {found, stops, skipped, total:files.length, listId:cur && cur.type === 'trip' && !cur.sample ? cur.id : '__new', urls:[]};
+  const pi = {found, stops, skipped, total:files.length, listId:cur && cur.type === 'trip' && !cur.sample && canEdit(cur) ? cur.id : '__new', urls:[]};
   if (googleReady()) {
     const s = $('#impStatus'); if (s) s.textContent = 'Finding the names of the places';
     await pool(stops.slice(0, 40), 4, async st => { st.place = await nearestPlace(st.lat, st.lng); });
@@ -2948,7 +3108,7 @@ function photoReviewHTML() {
   const sum = piSummary();
   return `<h2>${pi.stops.length} stop${pi.stops.length === 1 ? '' : 's'} from ${pi.found.length} photo${pi.found.length === 1 ? '' : 's'}</h2>
     <p class="sub">${range ? range + '. ' : ''}${pi.skipped ? `${pi.skipped} photo${pi.skipped === 1 ? ' had' : 's had'} no location and ${pi.skipped === 1 ? 'was' : 'were'} left out.` : 'Every photo had a location.'} Rename any stop before adding it.</p>
-    <div class="two"><label class="fld"><span>Add to</span><select id="piList"><option value="__new" ${l ? '' : 'selected'}>A new trip</option>${S.lists.filter(x => !x.sample).map(x => `<option value="${x.id}" ${l && x.id === l.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
+    <div class="two"><label class="fld"><span>Add to</span><select id="piList"><option value="__new" ${l ? '' : 'selected'}>A new trip</option>${myLists().filter(x => !x.sample).map(x => `<option value="${x.id}" ${l && x.id === l.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
     ${l ? '' : `<label class="fld"><span>Trip name</span><input id="piName" maxlength="60" value="${esc(pi.newName)}"></label>`}</div>
     <div class="pi-stops">${rows}</div>
     <div class="m-actions"><button type="button" class="ghost" data-action="modal-close">Cancel</button><button type="button" class="btn-accent" id="piGo" data-action="pi-confirm" ${sum.stops ? '' : 'disabled'}>${sum.text}</button></div>`;
@@ -3030,11 +3190,12 @@ function privacyHTML() {
   return `<h2>Privacy in this prototype</h2><p class="sub">What PinIt stores, where it is kept, and who can see it.</p>
     <ul class="priv-list">
       <li><b>Private lists and private notes</b> stay in this browser on this device. Nobody else can see them, and they are not backed up.</li>
-      ${STORE.kind === 'hosted' ? `<li><b>Shared lists</b> are stored in PinIt's online database. Everyone who joins a list with its invite link can see it and add to it. Photos on shared lists are stored online, and anyone who has a photo's web address can open it.</li>
+      ${STORE.kind === 'hosted' ? `<li><b>Shared lists</b> are stored in PinIt's online database. Everyone who joins a list with its link can see it, and can add to it unless the owner made it view only. Photos on shared lists are stored online, and anyone who has a photo's web address can open it.</li>
       <li><b>Sign-in.</b> PinIt gives this browser its own sign-in, with no email or password. If you clear this browser's data you will need the invite link again, and you stop being the owner of lists you created.</li>`
         : '<li><b>Shared lists</b> are stored with this page on Claude. Everyone you give access to the page can see them, and people with edit access can change them.</li>'}
       <li><b>Photos</b> are resized and their location data is removed before they are saved. Photos on private lists stay on this device.</li>
       <li><b>Maps and search.</b> With Google Maps connected, place searches and details come from Google. Film and book searches go to TMDB and Open Library. Your API keys stay on this device.</li>
+      <li><b>Saved-in counts.</b> ${STORE.kind === 'hosted' ? 'Each pin shows how many lists it is saved in, by type of list. The count covers shared lists only and is just a number: nobody can see which lists, whose they are or what else is in them. Private lists are never counted for anyone but you.' : 'Each pin shows how many of the lists you can see include it.'}</li>
       <li><b>No ads, analytics or tracking.</b></li>
       <li><b>Deleting.</b> Deleting a pin or a shared list removes it for everyone. Reset this device clears the lists, notes and photos PinIt has stored in this browser, and leaves shared lists alone.</li>
     </ul>
@@ -3044,7 +3205,7 @@ function privacyHTML() {
 
 /* ---------- drop a pin ---------- */
 function startDrop(msg) {
-  if (!S.lists.length) { openModal(newListHTML(), '#nlName'); toast('Create a list first, then add pins to it.'); return; }
+  if (!myLists().length) { openModal(newListHTML(), '#nlName'); toast('Create a list first, then add pins to it.'); return; }
   stopPlay(); V.drop = true; renderView(); renderMapTools();
   $('#dropBanner span').textContent = msg || 'Tap or click the map to drop your pin';
   if (isMobile() && V.tab !== 'map') { V.tab = 'map'; document.body.dataset.tab = 'map'; renderNav(); afterMapShown(); }
@@ -3082,7 +3243,7 @@ function closeModal() {
 }
 function openPinForm(o) {
   const p = o.pin || {}; const edit = !!o.pin;
-  const def = o.listId && getList(o.listId) ? o.listId : V.list !== 'all' && getList(V.list) ? V.list : (S.lists[0] ? S.lists[0].id : '');
+  const def = o.listId && canEdit(getList(o.listId)) ? o.listId : V.list !== 'all' && canEdit(getList(V.list)) ? V.list : (myLists()[0] ? myLists()[0].id : '');
   openModal(`<form data-form="pin" data-id="${edit ? p.id : ''}" data-lat="${o.lat}" data-lng="${o.lng}" data-place="${esc(o.placeId || '')}">
     <h2>${edit ? 'Edit pin' : 'New pin'}</h2>
     <div class="coord-line">${(+o.lat).toFixed(5)}, ${(+o.lng).toFixed(5)}</div>
@@ -3092,7 +3253,7 @@ function openPinForm(o) {
       <label class="fld"><span>Area</span><input id="pfArea" name="area" maxlength="80" value="${esc(p.area || o.area || '')}" placeholder="Neighbourhood or street"></label>
     </div>
     <div class="two">
-      ${edit ? '' : `<label class="fld"><span>Add to list</span><select id="pfList" name="list">${S.lists.map(l => `<option value="${l.id}" ${l.id === def ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></label>`}
+      ${edit ? '' : `<label class="fld"><span>Add to list</span><select id="pfList" name="list">${myLists().map(l => `<option value="${l.id}" ${l.id === def ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></label>`}
       <label class="fld"><span>Date visited</span><input id="pfDate" type="date" name="date" value="${esc(p.date || '')}"></label>
     </div>
     <label class="fld"><span>${icon('globe')} Shared note</span><textarea id="pfNote" name="note" rows="3" placeholder="Tips for anyone who sees this list">${esc(p.note || '')}</textarea></label>
@@ -3107,7 +3268,7 @@ function newListHTML() {
     <label class="fld"><span>Name</span><input id="nlName" name="name" required maxlength="60" placeholder="e.g. Rome, April 2027"></label>
     <div class="fld"><span>Type</span><div class="seg">${[['trip','Trip'],['guide','Guide'],['wishlist','Wishlist']].map(([v, t], i) => `<label class="seg-opt"><input type="radio" name="type" value="${v}" ${i ? '' : 'checked'}><span>${t}</span></label>`).join('')}</div></div>
     <label class="fld"><span>Description</span><input id="nlDesc" name="desc" maxlength="140" placeholder="Optional"></label>
-    <div class="fld"><span>Who can see it</span><div class="seg">${(STORE.on ? [['private','Only you'],['shared', STORE.kind === 'hosted' ? 'People I invite' : 'Everyone with access to this page']] : [['private','Only you'],['shared','People I invite'],['public','Anyone with the link']]).map(([v, t], i) => `<label class="seg-opt"><input type="radio" name="vis" value="${v}" ${i ? '' : 'checked'}><span>${t}</span></label>`).join('')}</div></div>
+    <div class="fld"><span>Who can see it</span><div class="seg">${(STORE.on ? (STORE.kind === 'hosted' ? [['private','Only you'],['shared','People I invite, who can add'],['public','Anyone with the link, view only']] : [['private','Only you'],['shared','Everyone with access to this page']]) : [['private','Only you'],['shared','People I invite'],['public','Anyone with the link']]).map(([v, t], i) => `<label class="seg-opt"><input type="radio" name="vis" value="${v}" ${i ? '' : 'checked'}><span>${t}</span></label>`).join('')}</div></div>
     <div class="m-actions"><button type="button" class="ghost" data-action="modal-close">Cancel</button><button class="btn-accent" type="submit">Create list</button></div></form>`;
 }
 function shareHTML(l) {
@@ -3115,8 +3276,13 @@ function shareHTML(l) {
     : !l.remote ? `<button type="button" class="person-x" data-action="remove-person" data-id="${l.id}" data-name="${esc(n)}" aria-label="Remove ${esc(n)}" title="Remove ${esc(n)}">${icon('close')}</button>` : ''}</span>`).join('')}</div></div>`;
   const nick = STORE.platformName ? '' : `<label class="fld"><span>Your name, as other people see it</span><span class="set-inline"><input id="nickInput" maxlength="40" value="${esc(ME.name)}" placeholder="e.g. Sam" autocomplete="off"><button type="button" class="pill" data-action="save-nick">Save</button></span></label>`;
   if (STORE.on && l.remote && STORE.kind === 'hosted') {
-    return `<h2>Share “${esc(l.name)}”</h2><p class="sub">Send this link to the people you want on the list. Anyone who opens it can see the list and add pins, notes and photos.</p>
-      <div class="fld"><span>Invite link</span><div class="linkbox"><span id="shareLink">${esc(location.origin + location.pathname + '#join-' + l.id)}</span><button class="pill sm" type="button" data-action="copy-link">${icon('copy')} Copy</button></div></div>
+    const mine = l.ownerId === ME.id, vo = l.vis === 'public';
+    return `<h2>Share “${esc(l.name)}”</h2><p class="sub">${l.role === 'viewer' ? 'You can look at this list and save anything on it to your own lists. Only the people who run it can change it. You can pass the link on.'
+      : vo ? 'Send this link to anyone. People who open it can look at the list and save pins to their own lists, but cannot change yours.'
+      : 'Send this link to the people you want on the list. Anyone who opens it can see the list and add pins, notes and photos.'}</p>
+      ${mine ? `<div class="fld"><span>People who open the link can</span><div class="seg">${[['shared', 'Add and edit'], ['public', 'View and save only']].map(([v, t]) => `<label class="seg-opt"><input type="radio" name="vis" value="${v}" data-list="${l.id}" ${l.vis === v ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div></div>
+      <p class="imp-note">This applies to people who join from now on. People already on the list keep what they had.</p>` : ''}
+      <div class="fld"><span>${vo ? 'Link' : 'Invite link'}</span><div class="linkbox"><span id="shareLink">${esc(location.origin + location.pathname + '#join-' + l.id)}</span><button class="pill sm" type="button" data-action="copy-link">${icon('copy')} Copy</button></div></div>
       ${people}
       ${nick}
       <div class="m-actions">${l.ownerId === ME.id ? `<button type="button" class="ghost" data-action="stop-sharing" data-id="${l.id}">Stop sharing</button>` : `<button type="button" class="ghost" data-action="leave-list" data-id="${l.id}">Leave this list</button>`}<button class="btn-accent" type="button" data-action="modal-close">Done</button></div>`;
@@ -3170,6 +3336,14 @@ const ACTIONS = {
     if (V.q || (V.list !== 'all' && V.list !== l.id)) { V.list = l.id; V.q = ''; $('#q').value = ''; V.editList = false; render(); }
     selectPin(t.dataset.id);
   },
+  'save-pin': t => {
+    const id = t.dataset.id; let item, from = null, preview = false;
+    if (V.preview && V.preview.id === id) { item = V.preview; preview = true; }
+    else { const f = findPin(id); if (!f) return; item = f.p; from = f.l; }
+    V.savePick = {item, from, preview};
+    openModal(savePickHTML(), myLists().some(l => l !== from) ? null : '#spNew');
+  },
+  'save-to': t => saveTo(t.dataset.list),
   'copy-to-list': t => {
     const f = findPin(t.dataset.id); const l = getList(t.dataset.list); if (!f || !l) return;
     const p = f.p;
@@ -3240,7 +3414,7 @@ const ACTIONS = {
   'tab': t => { V.tab = t.dataset.t; document.body.dataset.tab = V.tab; updateMini(); renderNav(); if (V.tab === 'map' || document.body.classList.contains('mini')) afterMapShown(); },
   'new-list': () => openModal(newListHTML(), '#nlName'),
   'share': () => { const l = getList(V.list); if (l) openModal(shareHTML(l), null); },
-  'edit-pin': t => { const f = findPin(t.dataset.id); if (!f) return; if (isPlace(f.p)) openPinForm({pin:f.p, lat:f.p.lat, lng:f.p.lng}); else openItemForm(f.p); },
+  'edit-pin': t => { const f = findPin(t.dataset.id); if (!f || !canEdit(f.l)) return; if (isPlace(f.p)) openPinForm({pin:f.p, lat:f.p.lat, lng:f.p.lng}); else openItemForm(f.p); },
   'add-item': () => openAdd(),
   'add-kind': t => {
     if (!V.add) return;
@@ -3268,11 +3442,12 @@ const ACTIONS = {
   'delete-list': t => removeList(t.dataset.id),
   'lib-edit': () => { V.editLib = !V.editLib; renderLibrary(); },
   'edit-list-field': t => {
+    if (!canEdit(getList(V.list))) return;
     V.editing = t.dataset.f; renderMain();
     const el = $(V.editing === 'name' ? '#lnInput' : '#ldInput');
     if (el) { el.focus(); const n = el.value.length; el.setSelectionRange(n, n); if (V.editing === 'name') el.select(); }
   },
-  'edit-people': () => { const l = getList(V.list); if (!l) return; openModal(shareHTML(l), '#invName'); },
+  'edit-people': () => { const l = getList(V.list); if (!l || !canEdit(l)) return; openModal(shareHTML(l), '#invName'); },
   'remove-person': t => {
     const l = getList(t.dataset.id); const who = t.dataset.name; if (!l || !who) return;
     const idx = l.collab.indexOf(who); if (idx < 0) return;
@@ -3280,9 +3455,9 @@ const ACTIONS = {
     $('#modal').innerHTML = shareHTML(l); renderLibrary(); renderMain(); renderDetail();
     toast(`Removed ${who} from the list`, () => { l.collab.splice(Math.min(idx, l.collab.length), 0, who); save(); renderLibrary(); renderMain(); renderDetail(); if (!$('#modalBack').hidden) $('#modal').innerHTML = shareHTML(l); });
   },
-  'list-edit': () => { V.editList = !V.editList; V.stFilter = 'all'; stopPlay(); renderMain(); syncMap(); },
+  'list-edit': () => { if (!canEdit(getList(V.list))) return; V.editList = !V.editList; V.stFilter = 'all'; stopPlay(); renderMain(); syncMap(); },
   'view-photo': t => openPhotoViewer(t.dataset.id, +t.dataset.i),
-  'add-photo': t => { V.photoFor = t.dataset.id; $('#photoInput').click(); },
+  'add-photo': t => { const f = findPin(t.dataset.id); if (!f || !canEdit(f.l)) return; V.photoFor = t.dataset.id; $('#photoInput').click(); },
   'modal-close': () => closeModal(),
   'copy-link': () => {
     const el = $('#shareLink'); const text = el ? el.textContent : '';
@@ -3310,7 +3485,7 @@ const ACTIONS = {
   'photo-import': () => openModal(photoImportHTML(), null),
   'pi-confirm': () => confirmPhotoImport(),
   'set-status': t => {
-    const f = findPin(t.dataset.id); if (!f) return;
+    const f = findPin(t.dataset.id); if (!f || !canEdit(f.l)) return;
     f.p.status = f.p.status === t.dataset.s ? '' : t.dataset.s;
     save(); renderMain(); renderDetail(); syncMap();
   },
@@ -3364,7 +3539,7 @@ document.addEventListener('submit', async e => {
       if (fp) { if (fp.p.name !== data.name) { fp.p.placeId = null; GCACHE.delete(fp.p.id); } Object.assign(fp.p, data); }
       save(); closeModal(); renderMain(); renderDetail(); renderMapTools(); syncMap(); toast('Pin updated');
     } else {
-      const l0 = getList(fd.get('list')) || S.lists[0]; if (!l0) return;
+      const l0 = [getList(fd.get('list')), myLists()[0]].find(canEdit); if (!l0) return;
       const input = f.querySelector('#pfPhotos');
       const files = input ? [...input.files].slice(0, Math.min(8, photoRoom({photos:[]}, l0))) : [];
       const btn = f.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; if (files.length) btn.textContent = 'Saving photos'; }
@@ -3407,9 +3582,13 @@ document.addEventListener('submit', async e => {
     if (fd.has('link')) fp.p.link = String(fd.get('link') || '').trim();
     save(); closeModal(); renderMain(); renderDetail(); renderLibrary(); renderView(); toast('Saved');
   } else if (kind === 'memory') {
-    const text = String(fd.get('m') || '').trim(); const fp = findPin(f.dataset.id); if (!text || !fp) return;
+    const text = String(fd.get('m') || '').trim(); const fp = findPin(f.dataset.id); if (!text || !fp || !canEdit(fp.l)) return;
     fp.p.memories.push({by:'You', text}); save(); renderDetail();
     const inp = $('#memInput'); if (inp) inp.focus();
+  } else if (kind === 'save-new') {
+    const name = String(fd.get('name') || '').trim(); if (!name || !V.savePick) return;
+    const l = {id:uid(), name, type:'wishlist', vis:'private', collab:[], desc:'', colors:PALETTES[S.lists.length % PALETTES.length], pins:[], info:[], remote:false, created:nowISO()};
+    S.lists.unshift(l); saveTo(l.id);
   } else if (kind === 'invite') {
     const who = String(fd.get('who') || '').trim(); const l = getList(f.dataset.id); if (!who || !l) return;
     if (!l.collab.some(n => n.toLowerCase() === who.toLowerCase())) l.collab.push(who);
@@ -3476,6 +3655,11 @@ document.addEventListener('keydown', e => {
   [l.pins[i], l.pins[j]] = [l.pins[j], l.pins[i]];
   save(); renderMain(); renderLibrary(); syncMap();
   const nh = document.querySelector(`.drag-h[data-id="${h.dataset.id}"]`); if (nh) nh.focus();
+});
+/* Rows in somebody else's list hold a save button, so the row itself is not a button element. */
+document.addEventListener('keydown', e => {
+  if ((e.key !== 'Enter' && e.key !== ' ') || !e.target.matches || !e.target.matches('.row[role=button]')) return;
+  e.preventDefault(); pickPin(e.target.dataset.id);
 });
 document.addEventListener('toggle', e => {
   const d = e.target;
