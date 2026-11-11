@@ -187,6 +187,97 @@ grant execute on function public.is_member(text), public.shares_list_with(uuid),
   public.put_item(text, text, jsonb), public.delete_item(text, text), public.delete_list(text),
   public.join_list(text), public.leave_list(text), public.set_name(text) to authenticated;
 
+-- ---------- accounts ----------
+-- People can sign in with an email link. Their private lists are then kept here too, visible only to them.
+-- A private list can't be joined, previewed or counted by anyone else.
+
+create or replace function public.join_list(p_id text) returns boolean
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if not exists (select 1 from lists where id = p_id and coalesce(data->>'vis', '') <> 'private') then return false; end if;
+  if exists (select 1 from lists where id = p_id and coalesce(data->>'vis', '') <> 'public')
+     and not exists (select 1 from profiles where id = auth.uid() and btrim(name) <> '') then
+    raise exception 'add your name before joining';
+  end if;
+  insert into list_members (list_id, user_id, role)
+  select l.id, auth.uid(), case when l.data->>'vis' = 'public' then 'viewer' else 'editor' end from lists l where l.id = p_id
+  on conflict do nothing;
+  return true;
+end $$;
+
+create or replace function public.list_preview(p_id text) returns table (name text, type text, vis text)
+language sql stable security definer set search_path = public as $$
+  select left(coalesce(data->>'name', ''), 80), coalesce(data->>'type', ''), coalesce(data->>'vis', '')
+  from lists where id = p_id and coalesce(data->>'vis', '') <> 'private';
+$$;
+
+create or replace function public.item_stats(p_keys text[]) returns table (key text, list_type text, n bigint)
+language sql stable security definer set search_path = public as $$
+  select i.key, coalesce(l.data->>'type', 'guide'), count(distinct i.list_id)
+  from items i join lists l on l.id = i.list_id
+  where i.key = any (p_keys[1:50]) and coalesce(l.data->>'vis', '') <> 'private'
+  group by 1, 2;
+$$;
+
+-- The owner makes a shared list private again: everyone else comes off it.
+create or replace function public.remove_members(p_id text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from lists where id = p_id and owner = auth.uid()) then raise exception 'only the owner can do that'; end if;
+  delete from list_members where list_id = p_id and user_id <> auth.uid();
+end $$;
+
+-- Signing in to an account that already exists, from a browser that was used without one:
+-- the browser asks for a one-time claim first, and redeems it once signed in, which moves
+-- its lists and memberships across. Claims last a day and only come from guest sign-ins.
+create table if not exists public.claims (
+  token text primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+alter table public.claims enable row level security;
+revoke all on public.claims from anon, authenticated;
+
+create or replace function public.create_claim() returns text
+language plpgsql security definer set search_path = public as $$
+declare t text;
+begin
+  if auth.uid() is null or coalesce((auth.jwt()->>'is_anonymous')::boolean, false) is not true then raise exception 'only for guests'; end if;
+  delete from claims where user_id = auth.uid() or created_at < now() - interval '1 day';
+  t := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+  insert into claims (token, user_id) values (t, auth.uid());
+  return t;
+end $$;
+
+create or replace function public.redeem_claim(p_token text) returns integer
+language plpgsql security definer set search_path = public as $$
+declare old uuid; me uuid := auth.uid(); n integer := 0;
+begin
+  if me is null then raise exception 'not signed in'; end if;
+  select user_id into old from claims where token = p_token and created_at > now() - interval '1 day';
+  delete from claims where token = p_token;
+  if old is null or old = me then return 0; end if;
+  if not exists (select 1 from auth.users where id = old and is_anonymous) then return 0; end if;
+  update lists set owner = me, data = jsonb_set(data, '{ownerId}', to_jsonb(me::text)) where owner = old;
+  get diagnostics n = row_count;
+  insert into list_members (list_id, user_id, role)
+  select list_id, me, role from list_members where user_id = old
+  on conflict (list_id, user_id) do update set role = case when list_members.role = 'editor' or excluded.role = 'editor' then 'editor' else 'viewer' end;
+  delete from list_members where user_id = old;
+  update items set data = jsonb_set(data, '{byId}', to_jsonb(me::text)) where data->>'byId' = old::text;
+  update items set data = jsonb_set(data, '{memories}', (
+      select coalesce(jsonb_agg(case when m->>'byId' = old::text then jsonb_set(m, '{byId}', to_jsonb(me::text)) else m end), '[]'::jsonb)
+      from jsonb_array_elements(data->'memories') m))
+    where jsonb_typeof(data->'memories') = 'array' and data->'memories' @> jsonb_build_array(jsonb_build_object('byId', old::text));
+  insert into profiles (id, name) select me, name from profiles where id = old and btrim(name) <> ''
+  on conflict (id) do update set name = case when btrim(profiles.name) = '' then excluded.name else profiles.name end;
+  return n;
+end $$;
+
+revoke all on function public.remove_members(text), public.create_claim(), public.redeem_claim(text) from public, anon;
+grant execute on function public.remove_members(text), public.create_claim(), public.redeem_claim(text) to authenticated;
+
 -- ---------- live updates ----------
 do $$
 declare t text;

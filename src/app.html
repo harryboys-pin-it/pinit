@@ -599,6 +599,14 @@ div.row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* ---- v2: sharing status, settings, been / want to go, days, replay, photo import, phone-first ---- */
+.acct-btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.acct-btn .ic{width:14px;height:14px}
+.acct-btn.in{padding:0;border:0;background:none;width:32px;height:32px;justify-content:center}
+.acct-btn.in .av{width:30px;height:30px;font-size:13px}
+@media (max-width:860px){.acct-btn.out{width:32px;padding:0;justify-content:center}.acct-btn.out span{display:none}.acct-btn.out .ic{width:16px;height:16px}}
+.link-btn{border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer}
+.sent-note{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--sel);color:var(--fg)}
+.sent-note .ic{width:16px;height:16px;color:var(--accent);flex:none;margin-top:1px}
 .sync-chip{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
 .sync-chip i{width:8px;height:8px;border-radius:50%;background:var(--faint)}
 .sync-chip.ok i{background:var(--good)}
@@ -740,7 +748,7 @@ div.row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
   <header class="topbar">
     <div class="brand"><span class="mark"></span><span>PinIt</span></div>
     <label class="search" for="q"><span id="searchIc"></span><input id="q" type="search" placeholder="Search your lists" autocomplete="off" aria-label="Search your lists"></label>
-    <div class="top-right"><button class="sync-chip" type="button" data-action="settings" id="syncChip"></button><button class="icon-btn" type="button" data-action="settings" title="Settings" aria-label="Settings" id="keyBtn"></button></div>
+    <div class="top-right"><button class="acct-btn" type="button" data-action="account" id="acctBtn" hidden></button><button class="sync-chip" type="button" data-action="settings" id="syncChip"></button><button class="icon-btn" type="button" data-action="settings" title="Settings" aria-label="Settings" id="keyBtn"></button></div>
   </header>
   <aside class="library panel" id="library" aria-label="Your lists"></aside>
   <main class="main panel" id="main"></main>
@@ -1093,7 +1101,7 @@ function saveLocal() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify({lists:S.lists.filter(l => !l.remote)})); }
   catch (e) { if (!saveWarned) { saveWarned = true; toast('This browser cannot store more, so recent changes last until you close the page.'); } }
 }
-function save() { saveLocal(); if (STORE.on) syncOut(); }
+function save() { saveLocal(); if (STORE.on) syncOut(); if (STORE.account && !STORE.account.anon) setTimeout(adoptLocal, 0); }
 let S = load();
 /* People who already had the example lists get the newer example guide, once. */
 let seeded3 = false;
@@ -1224,7 +1232,7 @@ const okAsset = a => typeof a === 'string' && /^[A-Za-z0-9_-]{8,80}$/.test(a);
 const okDay = d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
 const str = (v, n) => (typeof v === 'string' || typeof v === 'number' ? String(v) : '').slice(0, n || 400);
 function metaDoc(l) {
-  return {name:l.name || 'Untitled', type:l.type, vis:l.vis === 'public' ? 'public' : 'shared', desc:l.desc || '', colors:l.colors,
+  return {name:l.name || 'Untitled', type:l.type, vis:['public', 'private'].includes(l.vis) ? l.vis : 'shared', desc:l.desc || '', colors:l.colors,
     info:(l.info || []).map(i => ({id:i.id, label:i.label, value:i.value})), ownerId:l.ownerId || ME.id, created:l.created || nowISO(), order:l.pins.map(p => p.id)};
 }
 function itemDoc(p) {
@@ -1300,7 +1308,9 @@ document.addEventListener('focusout', () => { if (renderPending) setTimeout(() =
 
 function qwrite(path, fn) {
   STORE.qn.set(path, (STORE.qn.get(path) || 0) + 1);
-  const prev = STORE.queue.get(path) || Promise.resolve();
+  /* An item waits for any pending write of its list, so a new list exists before its items arrive. */
+  const lp = /^(lists\/[^/]+)\/items\//.exec(path);
+  const prev = Promise.all([STORE.queue.get(path), lp && STORE.queue.get(lp[1])].filter(Boolean).map(x => x.catch(() => {})));
   const next = prev.then(() => { STORE.qn.set(path, Math.max(0, (STORE.qn.get(path) || 1) - 1)); return fn(); }).catch(writeFailed);
   STORE.queue.set(path, next);
   next.then(() => { if (STORE.queue.get(path) === next) { STORE.queue.delete(path); STORE.qn.delete(path); } });
@@ -1344,7 +1354,7 @@ function applyLists(snap) {
     }
     let sh = STORE.shadow.get(d.id); if (!sh) { sh = {meta:'', items:new Map(), loaded:false}; STORE.shadow.set(d.id, sh); }
     const order = (Array.isArray(m.order) ? m.order : []).filter(x => typeof x === 'string').slice(0, 2000);
-    const next = {name:str(m.name, 80) || 'Untitled', type:Object.hasOwn(TYPE, m.type) && m.type !== 'all' ? m.type : 'trip', vis:m.vis === 'public' ? 'public' : 'shared',
+    const next = {name:str(m.name, 80) || 'Untitled', type:Object.hasOwn(TYPE, m.type) && m.type !== 'all' ? m.type : 'trip', vis:['public', 'private'].includes(m.vis) ? m.vis : 'shared',
       desc:str(m.desc, 200), colors:Array.isArray(m.colors) && m.colors.length === 2 && m.colors.every(okColor) ? m.colors : PALETTES[0],
       info:(Array.isArray(m.info) ? m.info : []).slice(0, 30).filter(i => i && typeof i === 'object').map(i => ({id:str(i.id, 16).replace(/[^a-z0-9]/gi, '') || uid(), label:str(i.label, 60), value:str(i.value, 800)})),
       ownerId:str(m.ownerId, 120), created:str(m.created, 12)};
@@ -1363,7 +1373,7 @@ function applyLists(snap) {
     if (V.list === l.id) { V.list = 'all'; V.sel = null; V.detail = false; }
   }
   if (changed) { applyNames(); resolveNames(); softRender(); }
-  if (STORE.kind === 'hosted' && !ME.name && !V.askName && !V.joinTarget && S.lists.some(l => l.remote && l.role !== 'viewer')) needName();
+  if (STORE.kind === 'hosted' && !ME.name && !V.askName && !V.joinTarget && S.lists.some(l => l.remote && l.role !== 'viewer' && l.vis !== 'private')) needName();
 }
 function applyItems(listId, snap) {
   const l = S.lists.find(x => x.id === listId && x.remote); const sh = STORE.shadow.get(listId); if (!l || !sh) return;
@@ -1392,14 +1402,14 @@ function syncOut() {
     if (!sh) { sh = {meta:'', items:new Map(), loaded:true}; STORE.shadow.set(l.id, sh); STORE.pending.add(l.id); }
     if (!sh.loaded) continue;
     const base = 'lists/' + l.id; const live = new Set();
+    const mj = JSON.stringify(metaDoc(l));
+    if (sh.meta !== mj) { sh.meta = mj; put(base, JSON.parse(mj)); }
     for (const p of l.pins) {
       live.add(p.id);
       const j = JSON.stringify(itemDoc(p));
       if (sh.items.get(p.id) !== j) { sh.items.set(p.id, j); put(base + '/items/' + p.id, JSON.parse(j)); }
     }
     for (const k of [...sh.items.keys()]) if (!live.has(k)) { sh.items.delete(k); del(base + '/items/' + k); }
-    const mj = JSON.stringify(metaDoc(l));
-    if (sh.meta !== mj) { sh.meta = mj; put(base, JSON.parse(mj)); }
     ensureSub(l.id);
   }
   for (const [id, sh] of [...STORE.shadow]) {
@@ -1415,7 +1425,7 @@ async function toSharedPhoto(ph) {
     return blob ? await storePhoto(blob, true) : null;
   } catch (e) { return null; }
 }
-async function makeRemote(l) {
+async function makeRemote(l, vis) {
   if (!STORE.on || !STORE.canWrite) { toast('Sharing is not available here.'); return false; }
   if (l.sample) { toast('Example lists stay on this device. Create your own list to share.'); return false; }
   for (const p of l.pins) {
@@ -1426,7 +1436,7 @@ async function makeRemote(l) {
     if (p.priv) setPriv(p.id, p.priv);
   }
   const old = l.id; l.id = rid(); if (V.list === old) V.list = l.id;
-  Object.assign(l, {remote:true, vis:'shared', ownerId:ME.id, created:nowISO(), collab:[]});
+  Object.assign(l, {remote:true, vis:vis || 'shared', ownerId:ME.id, created:l.created || nowISO(), collab:[]});
   save();
   return true;
 }
@@ -1434,10 +1444,44 @@ function makeLocal(l) {
   Object.assign(l, {remote:false, vis:'private', collab:[]});
   save();
 }
+const CLAIM_KEY = 'pinit-claim', PENDING_KEY = 'pinit-pending-email';
+/* Signed in with an email: private lists are kept online too, visible only to their owner. */
+const accountOn = () => STORE.kind === 'hosted' && !!STORE.account && !STORE.account.anon && STORE.on && STORE.canWrite;
+let adopting = false;
+async function adoptLocal() {
+  if (adopting || !accountOn()) return;
+  const todo = S.lists.filter(l => !l.remote && !l.sample && l.id !== 'all');
+  if (!todo.length) return;
+  adopting = true;
+  try { for (const l of todo) await makeRemote(l, 'private'); } finally { adopting = false; }
+  render();
+}
 function deviceId() { let d = lsGet(DEVICE_KEY); if (!d) { d = 'g_' + rid(); lsSet(DEVICE_KEY, d); } return d; }
 function setNick(name) {
   ME.name = name; lsSet(NICK_KEY, name);
+  if (typeof renderAccount === 'function') renderAccount();
   if (STORE.on && STORE.canWrite && !STORE.platformName) put('people/' + ME.id, {nick:name});
+}
+function renderAccount() {
+  const el = $('#acctBtn'); if (!el) return;
+  const a = STORE.kind === 'hosted' && STORE.account;
+  el.hidden = !a; if (!a) return;
+  if (a.anon) { el.className = 'acct-btn out'; el.innerHTML = `${icon('users')}<span>Sign in</span>`; el.title = 'Sign in to see your lists on any device'; el.setAttribute('aria-label', 'Sign in'); }
+  else { el.className = 'acct-btn in'; el.innerHTML = avatar(ME.name || a.email || 'You'); el.title = `Signed in as ${a.email}`; el.setAttribute('aria-label', `Your account, signed in as ${a.email}`); }
+}
+function accountHTML() {
+  const a = STORE.account || {anon:true, email:''};
+  if (!a.anon) return `<h2>Your account</h2><p class="sub">Signed in as <b>${esc(a.email)}</b>. Your lists are saved to your account, so they are here on any device where you sign in.</p>
+    <label class="fld"><span>Your name, as other people see it</span><span class="set-inline"><input id="nickInput" maxlength="40" value="${esc(ME.name)}" placeholder="e.g. Sam" autocomplete="given-name"><button type="button" class="pill" data-action="save-nick">Save</button></span></label>
+    <p class="imp-note">Example lists stay on each device. Everything else follows you.</p>
+    <div class="m-actions"><button type="button" class="ghost" data-action="sign-out">Sign out</button><button type="button" class="btn-accent" data-action="modal-close">Done</button></div>`;
+  const pending = lsGet(PENDING_KEY);
+  return `<h2>Sign in</h2><p class="sub">See your lists on any device, and keep them if you clear this browser. No password: we email you a link.</p>
+    ${pending ? `<p class="imp-note sent-note">${icon('check')}<span>We sent a link to <b>${esc(pending)}</b>. Open it to finish signing in. It can take a minute, and may land in spam.</span></p>` : ''}
+    <form data-form="sign-in"><label class="fld"><span>Email address</span><input id="emailInput" name="email" type="email" required maxlength="200" value="${esc(pending)}" placeholder="you@example.com" autocomplete="email" inputmode="email"></label>
+    <p class="imp-note" id="signInErr" hidden></p>
+    <p class="imp-note">The lists you have on this device come with you. We only use your email to sign you in.</p>
+    <div class="m-actions"><button type="button" class="ghost" data-action="modal-close">Not now</button><button type="submit" class="btn-accent">${pending ? 'Send again' : 'Email me a link'}</button></div></form>`;
 }
 function renderSync() {
   const el = $('#syncChip'); if (!el) return;
@@ -1457,6 +1501,10 @@ function loadScript(src) {
 }
 async function hostedBackend() {
   if (!(window.supabase && window.supabase.createClient)) await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js');
+  /* A sign-in link that has expired or was already used comes back with an error in the address. */
+  const hm = /error_description=([^&]+)/.exec(location.hash || '');
+  const linkError = hm ? decodeURIComponent(hm[1].replace(/\+/g, ' ')) : '';
+  if (hm) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
   const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey);
   let session = (await sb.auth.getSession()).data.session;
   if (!session) {
@@ -1466,6 +1514,7 @@ async function hostedBackend() {
     session = r.data.session;
   }
   const uid = session.user.id;
+  const account = {email:session.user.email || '', anon:!!session.user.is_anonymous || !session.user.email};
   const subs = new Map(), timers = new Map();
   const snap = rows => ({docs:rows.map(r => ({id:r.id, exists:true, data:() => r.data})), metadata:{fromCache:false, hasPendingWrites:false}});
   async function rows(path) {
@@ -1538,13 +1587,40 @@ async function hostedBackend() {
     }
   };
   const user = {me:async () => ({id:uid, name:''}), id:async () => uid, can:async () => true, profiles:async () => ({})};
+  /* Lists made in this browser before signing in to an account that already existed move across. */
+  let claimed = 0;
+  const claim = lsGet(CLAIM_KEY);
+  if (claim && !account.anon) { lsSet(CLAIM_KEY, ''); try { claimed = +(await rpc('redeem_claim', {p_token:claim})) || 0; } catch (e) {} }
+  let myName = '';
+  try { const r = await sb.from('profiles').select('name').eq('id', uid); myName = str(((r.data || [])[0] || {}).name, 40); } catch (e) {}
+  /* Signing in or out in another tab, or finishing sign-in from the email link, reloads into the new account. */
+  sb.auth.onAuthStateChange((ev, s) => {
+    if (!s || !s.user) return;
+    if (s.user.id !== uid || (account.anon && s.user.email && !s.user.is_anonymous)) location.reload();
+  });
+  const signIn = async email => {
+    const back = location.origin + location.pathname;
+    if (account.anon) {
+      /* A guest keeps everything: the email is added to this browser's sign-in. */
+      const r = await sb.auth.updateUser({email}, {emailRedirectTo:back});
+      if (!r.error) return 'link';
+      if (!(r.error.code === 'email_exists' || /already|exists|registered/i.test(r.error.message || ''))) throw r.error;
+      /* That email already has an account: sign in to it, and bring this browser's lists along. */
+      try { lsSet(CLAIM_KEY, String(await rpc('create_claim')) || ''); } catch (e) {}
+    }
+    const r2 = await sb.auth.signInWithOtp({email, options:{shouldCreateUser:true, emailRedirectTo:back}});
+    if (r2.error) throw r2.error;
+    return 'signin';
+  };
+  const signOut = async () => { await sb.auth.signOut(); };
   const assets = {async upload(blob) {
     const id = rid() + rid();
     const {error} = await sb.storage.from('photos').upload(id, blob, {contentType:'image/jpeg', cacheControl:'31536000'});
     if (error) throw error;
     return {id};
   }};
-  return {db, user, assets,
+  return {db, user, assets, account, signIn, signOut, claimed, myName, linkError,
+    removeMembers:id => rpc('remove_members', {p_id:id}),
     assetUrl:id => CFG.supabaseUrl.replace(/\/+$/, '') + '/storage/v1/object/public/photos/' + id,
     join:async id => { const ok = await rpc('join_list', {p_id:id}); refresh('lists', 0); refresh('people'); return ok === true; },
     leave:async id => { await rpc('leave_list', {p_id:id}); refresh('lists', 0); },
@@ -1617,7 +1693,12 @@ async function initStore() {
     try {
       const b = await hostedBackend();
       db = b.db; user = b.user; assets = b.assets;
-      Object.assign(STORE, {kind:'hosted', assetUrl:b.assetUrl, join:b.join, leave:b.leave, stats:b.stats, peek:b.peek, setName:b.setName});
+      Object.assign(STORE, {kind:'hosted', assetUrl:b.assetUrl, join:b.join, leave:b.leave, stats:b.stats, peek:b.peek, setName:b.setName,
+        account:b.account, signIn:b.signIn, signOut:b.signOut, removeMembers:b.removeMembers});
+      if (b.myName && !lsGet(NICK_KEY)) lsSet(NICK_KEY, b.myName);
+      if (b.linkError) setTimeout(() => toast('That sign-in link has expired or was already used. Send yourself a new one.'), 600);
+      if (b.claimed) setTimeout(() => toast(`Moved ${b.claimed} list${b.claimed === 1 ? '' : 's'} from this browser into your account`), 900);
+      if (!b.account.anon) lsSet(PENDING_KEY, '');
     } catch (e) { STORE.state = 'error'; renderSync(); return; }
   } else {
     try { [db, user, assets] = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('assets')]); } catch (e) {}
@@ -1647,7 +1728,8 @@ async function initStore() {
     if (ch) { applyNames(); softRender(); }
   }, () => {});
   if (!STORE.platformName && ME.name && STORE.canWrite) put('people/' + ME.id, {nick:ME.name});
-  softRender();
+  softRender(); renderAccount();
+  if (accountOn()) adoptLocal();
   if (HOSTED) joinFromLink();
 }
 
@@ -1733,7 +1815,7 @@ function renderLibrary() {
     <div class="lib-head"><h2>${icon('library')} Your lists</h2><span class="lib-head-btns">${S.lists.length ? `<button type="button" class="txt-btn ${V.editLib ? 'on' : ''}" data-action="lib-edit" aria-pressed="${V.editLib}">${V.editLib ? 'Done' : 'Edit'}</button>` : ''}<button type="button" class="icon-btn" data-action="import" aria-label="Import from Google Maps" title="Import from Google Maps">${icon('import')}</button><button type="button" class="icon-btn" data-action="new-list" aria-label="New list" title="New list">${icon('plus')}</button></span></div>
     <div class="chips">${[['all','All'],['trip','Trips'],['guide','Guides'],['wishlist','Wishlists']].map(([k, t]) => `<button type="button" class="chip ${f === k ? 'on' : ''}" data-action="filter" data-f="${k}">${t}</button>`).join('')}</div>
     <div class="lib-list">${f === 'all' ? row(ALL) : ''}${lists.map(row).join('') || '<p class="muted" style="padding:8px 10px;margin:0">No lists of this type yet.</p>'}</div>
-    <div class="lib-foot"><button type="button" class="pill sm" data-action="photo-import">${icon('photos')} Import trip photos</button><button type="button" class="pill sm" data-action="import">${icon('import')} Import from Google Maps</button>${STORE.on ? 'Shared lists update for everyone with access. Private lists stay on this device.' : 'Your lists are saved in this browser only.'}</div>`;
+    <div class="lib-foot"><button type="button" class="pill sm" data-action="photo-import">${icon('photos')} Import trip photos</button><button type="button" class="pill sm" data-action="import">${icon('import')} Import from Google Maps</button>${accountOn() ? 'Your lists are saved to your account.' : STORE.kind === 'hosted' && STORE.on ? 'Private lists stay on this device. <button type="button" class="link-btn" data-action="account">Sign in</button> to keep them everywhere.' : STORE.on ? 'Shared lists update for everyone with access. Private lists stay on this device.' : 'Your lists are saved in this browser only.'}</div>`;
 }
 function rowHTML(x, i, showList) {
   const cls = (x.p.id === V.sel ? ' sel' : '') + (x.p.id === V.sel && V.playing ? ' playing' : '');
@@ -1796,7 +1878,7 @@ function savedInHTML(p, curL) {
   const word = {trip:['trip', 'trips'], guide:['guide', 'guides'], wishlist:['wishlist', 'wishlists']};
   const rows = ['trip', 'guide', 'wishlist'].map(t => {
     const vis = hits.filter(h => h.l.type === t);
-    const n = g && g.ok ? Math.max(vis.length, (g[t] || 0) + vis.filter(h => !h.l.remote).length) : vis.length;
+    const n = g && g.ok ? Math.max(vis.length, (g[t] || 0) + vis.filter(h => !h.l.remote || h.l.vis === 'private').length) : vis.length;
     return {t, n, who:[...new Set(vis.map(h => ownerName(h.l)))], more:n - vis.length};
   }).filter(r => r.n);
   const total = rows.reduce((a, r) => a + r.n, 0);
@@ -3201,11 +3283,12 @@ function applyExtras() {
 function settingsHTML() {
   const k = savedKey(); const gOn = MAP && MAP.kind === 'google';
   const sync = {local:'Everything is saved on this device only. Open PinIt as a page on Claude to share lists with other people.', connecting:'Connecting to shared lists.',
-    live:STORE.kind === 'hosted' ? 'Shared lists update live for everyone on them. Private lists stay on this device.' : 'Shared lists update live for everyone you have given access to this page. Private lists stay on this device.',
+    live:STORE.kind === 'hosted' ? (accountOn() ? `Signed in as ${esc(STORE.account.email)}. Your lists are saved to your account and update live for everyone on them.` : 'Shared lists update live for everyone on them. Private lists stay on this device until you sign in.') : 'Shared lists update live for everyone you have given access to this page. Private lists stay on this device.',
     stale:'Shared lists cannot be reached yet and may be out of date.', error:'Shared lists are unavailable right now. Private lists still work.'}[STORE.state];
   return `<h2>Settings</h2>
     <section class="set-sec"><h3>${icon('users')} You and sharing</h3>
       <p class="imp-note">${sync}</p>
+      ${STORE.kind === 'hosted' ? `<div class="m-actions" style="justify-content:flex-start"><button type="button" class="pill" data-action="account">${icon('users')} ${accountOn() ? 'Your account' : 'Sign in'}</button></div>` : ''}
       ${STORE.on && STORE.platformName ? `<p class="imp-note">Other people see you as <b>${esc(ME.name)}</b>.</p>`
         : `<label class="fld"><span>Your name, as other people see it</span><span class="set-inline"><input id="nickInput" maxlength="40" value="${esc(ME.name)}" placeholder="e.g. Sam" autocomplete="off"><button type="button" class="pill" data-action="save-nick">Save</button></span></label>`}
     </section>
@@ -3228,9 +3311,9 @@ function settingsHTML() {
 function privacyHTML() {
   return `<h2>Privacy in this prototype</h2><p class="sub">What PinIt stores, where it is kept, and who can see it.</p>
     <ul class="priv-list">
-      <li><b>Private lists and private notes</b> stay in this browser on this device. Nobody else can see them, and they are not backed up.</li>
+      <li><b>Private lists and private notes</b> ${accountOn() ? 'are saved to your account online. Nobody else can see them.' : 'stay in this browser on this device. Nobody else can see them, and they are not backed up.'}${STORE.kind === 'hosted' && !accountOn() ? ' If you sign in, they are saved to your account so you can use them on any device.' : ''}</li>
       ${STORE.kind === 'hosted' ? `<li><b>Shared lists</b> are stored in PinIt's online database. Everyone who joins a list with its link can see it, and can add to it unless the owner made it view only. Photos on shared lists are stored online, and anyone who has a photo's web address can open it.</li>
-      <li><b>Sign-in.</b> PinIt gives this browser its own sign-in, with no email or password. If you clear this browser's data you will need the invite link again, and you stop being the owner of lists you created.</li>`
+      <li><b>Sign-in.</b> ${accountOn() ? 'You are signed in with your email address, which is used only for signing in. Other people on your lists see your name, not your email.' : 'Until you sign in, PinIt gives this browser its own guest sign-in, with no email or password. If you clear this browser\'s data you will need the invite link again, and you stop being the owner of lists you created. Sign in with your email to keep your lists and use them on any device.'}</li>`
         : '<li><b>Shared lists</b> are stored with this page on Claude. Everyone you give access to the page can see them, and people with edit access can change them.</li>'}
       <li><b>Photos</b> are resized and their location data is removed before they are saved. Photos on private lists stay on this device.</li>
       <li><b>Maps and search.</b> With Google Maps connected, place searches and details come from Google. Film and book searches go to TMDB and Open Library. Your API keys stay on this device.</li>
@@ -3315,6 +3398,11 @@ function shareHTML(l) {
   const people = `<div class="fld"><span>People on this list</span><div class="people">${['You', ...l.collab].map(n => `<span class="person">${avatar(n)}${esc(n)}${n === 'You' ? (!l.remote || l.ownerId === ME.id ? '<small class="muted">Owner</small>' : '')
     : !l.remote ? `<button type="button" class="person-x" data-action="remove-person" data-id="${l.id}" data-name="${esc(n)}" aria-label="Remove ${esc(n)}" title="Remove ${esc(n)}">${icon('close')}</button>` : ''}</span>`).join('')}</div></div>`;
   const nick = STORE.platformName ? '' : `<label class="fld"><span>Your name, as other people see it</span><span class="set-inline"><input id="nickInput" maxlength="40" value="${esc(ME.name)}" placeholder="e.g. Sam" autocomplete="off"><button type="button" class="pill" data-action="save-nick">Save</button></span></label>`;
+  if (STORE.on && l.remote && STORE.kind === 'hosted' && l.vis === 'private') {
+    return `<h2>Share “${esc(l.name)}”</h2><p class="sub">This list is private. It is saved to your account and only you can see it.</p>
+      <p class="imp-note">Sharing gives you an invite link. Anyone you send it to can open the list and add pins, notes and photos. You can make it view only after sharing. Your private notes stay private.</p>
+      <div class="m-actions"><button class="ghost" type="button" data-action="modal-close">Not now</button><button class="btn-accent" type="button" data-action="start-sharing" data-id="${l.id}">Share this list</button></div>`;
+  }
   if (STORE.on && l.remote && STORE.kind === 'hosted') {
     const mine = l.ownerId === ME.id, vo = l.vis === 'public';
     return `<h2>Share “${esc(l.name)}”</h2><p class="sub">${l.role === 'viewer' ? 'You can look at this list and save anything on it to your own lists. Only the people who run it can change it. You can pass the link on.'
@@ -3520,6 +3608,15 @@ const ACTIONS = {
   },
   'settings': () => openModal(settingsHTML(), null),
   'privacy': () => openModal(privacyHTML(), null),
+  'account': () => openModal(accountHTML(), STORE.account && STORE.account.anon ? '#emailInput' : null),
+  'sign-out': async t => {
+    if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Tap again to sign out'; return; }
+    t.disabled = true;
+    try { await STORE.signOut(); } catch (e) {}
+    /* Lists that live in the account leave this browser with it. Example lists stay. */
+    S.lists = S.lists.filter(l => !l.remote); lsSet(NICK_KEY, ''); lsSet(PENDING_KEY, '');
+    saveLocal(); location.reload();
+  },
   'save-nick': () => { const v = ($('#nickInput').value || '').trim().slice(0, 40); setNick(v); applyNames(); toast(v ? 'Name saved' : 'Name cleared'); },
   'toggle-extras': () => { lsSet(EXTRAS_KEY, extrasOn() ? '0' : '1'); applyExtras(); save(); render(); $('#modal').innerHTML = settingsHTML(); },
   'photo-import': () => openModal(photoImportHTML(), null),
@@ -3545,6 +3642,7 @@ const ACTIONS = {
       openModal(shareHTML(l), null); t = $('#modal [data-action=start-sharing]') || t;
     }
     t.disabled = true; t.textContent = 'Sharing';
+    if (l.remote && l.vis === 'private') { l.vis = 'shared'; save(); render(); openModal(shareHTML(l), null); toast('The list is now shared'); return; }
     if (await makeRemote(l)) { render(); openModal(shareHTML(l), null); toast('The list is now shared'); }
     else { t.disabled = false; t.textContent = 'Share this list'; }
   },
@@ -3561,6 +3659,11 @@ const ACTIONS = {
   'stop-sharing': t => {
     const l = getList(t.dataset.id); if (!l) return;
     if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Tap again to make it private'; return; }
+    if (accountOn() && l.remote && l.ownerId === ME.id) {
+      l.vis = 'private'; l.collab = []; l.memberIds = []; save();
+      if (STORE.removeMembers) STORE.removeMembers(l.id).catch(() => toast('Could not take everyone off the list. Try again.'));
+      render(); closeModal(); toast('The list is private again. Only you can see it.'); return;
+    }
     makeLocal(l); render(); closeModal(); toast('The list is private again and saved on this device');
   }
 };
@@ -3610,7 +3713,7 @@ document.addEventListener('submit', async e => {
       const nick = await askName({title:'Add your name to share', sub:'People you invite will see it next to everything you add.', ok:'Create list', cancel:'Keep it private'});
       if (nick) { try { await saveNameNow(nick); } catch (e) { vis = 'private'; } } else vis = 'private';
     }
-    const remote = STORE.on && STORE.canWrite && vis !== 'private';
+    const remote = STORE.on && STORE.canWrite && (vis !== 'private' || accountOn());
     const l = {id:remote ? rid() : uid(), name, type:fd.get('type') || 'trip', vis, collab:[], desc:String(fd.get('desc') || '').trim(), colors:PALETTES[S.lists.length % PALETTES.length], pins:[], info:[], remote, created:nowISO()};
     if (remote) l.ownerId = ME.id;
     S.lists.unshift(l); save(); closeModal();
@@ -3640,9 +3743,26 @@ document.addEventListener('submit', async e => {
     const text = String(fd.get('m') || '').trim(); const fp = findPin(f.dataset.id); if (!text || !fp || !canEdit(fp.l)) return;
     fp.p.memories.push({by:'You', text}); save(); renderDetail();
     const inp = $('#memInput'); if (inp) inp.focus();
+  } else if (kind === 'sign-in') {
+    const email = String(fd.get('email') || '').trim().toLowerCase();
+    const er = $('#signInErr'); const btn = f.querySelector('button[type=submit]');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { if (er) { er.hidden = false; er.textContent = 'That does not look like an email address.'; } return; }
+    if (!STORE.signIn) return;
+    btn.disabled = true; btn.textContent = 'Sending';
+    try {
+      await STORE.signIn(email);
+      lsSet(PENDING_KEY, email);
+      openModal(accountHTML(), null);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Email me a link';
+      const m = String((err && (err.message || err.code)) || '');
+      if (er) { er.hidden = false; er.textContent = /rate|too many|seconds/i.test(m) ? 'Too many emails have been sent just now. Wait a little and try again.' : 'Could not send the email. Check the address and your connection, then try again.'; }
+    }
   } else if (kind === 'save-new') {
     const name = String(fd.get('name') || '').trim(); if (!name || !V.savePick) return;
-    const l = {id:uid(), name, type:'wishlist', vis:'private', collab:[], desc:'', colors:PALETTES[S.lists.length % PALETTES.length], pins:[], info:[], remote:false, created:nowISO()};
+    const acct = accountOn();
+    const l = {id:acct ? rid() : uid(), name, type:'wishlist', vis:'private', collab:[], desc:'', colors:PALETTES[S.lists.length % PALETTES.length], pins:[], info:[], remote:acct, created:nowISO()};
+    if (acct) l.ownerId = ME.id;
     S.lists.unshift(l); saveTo(l.id);
   } else if (kind === 'invite') {
     const who = String(fd.get('who') || '').trim(); const l = getList(f.dataset.id); if (!who || !l) return;
