@@ -15,30 +15,31 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: music-app shell. Library rail | list as a tracklist | map, with a full-width "now playing" pin bar.
-   Colours: "Mint and cream". A warm cream ground, mint tints for selection, pine green for actions
-   and soft peach for pins, so the app sits calmly around a light map. */
+   Colours: "Harbour". Cool white and soft grey, deep navy for actions and coral for pins. Colour is kept
+   for things that matter (buttons, pins, the map), so the rest stays clean and quiet. */
 :root{
   color-scheme:light;
-  --bg:#F3EEE3;
-  --panel:#FFFCF6;
-  --panel-2:#F6F0E4;
-  --hover:#EFE8DA;
-  --sel:#DCEEE4;
-  --line:#E3DBCA;
-  --fg:#1E2B27;
-  --muted:#56655E;
-  --faint:#5D6B64;
-  --accent:#256E58;
+  --bg:#F5F7FA;
+  --panel:#FFFFFF;
+  --panel-2:#F1F4F8;
+  --hover:#EAEFF5;
+  --sel:#E7EEF8;
+  --line:#E1E6EE;
+  --fg:#0F1C2E;
+  --muted:#556274;
+  --faint:#5C687A;
+  --accent:#1E3A5F;
   --accent-ink:#FFFFFF;
-  --pin:#F2A27F;
-  --pin-ink:#3A1D10;
+  --pin:#E8604C;
+  --pin-ink:#FFFFFF;
+  --cover:#E9EEF5;
   --danger:#B03E28;
-  --good:#286C44;
-  --shadow:52,44,28;
-  --map-bg:#ECE6D8;
-  --map-minor:#F7F2E8;
-  --map-major:#FFFDF8;
-  --map-park:#CFE5CF;
+  --good:#1E3A5F;
+  --shadow:15,28,46;
+  --map-bg:#EDF0F4;
+  --map-minor:#F7F9FB;
+  --map-major:#FFFFFF;
+  --map-park:#DCEADF;
   --f-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
   --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
@@ -133,8 +134,8 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .lib-row{display:flex;align-items:center;gap:12px;padding:7px 8px;border-radius:8px;border:0;background:none;text-align:left;cursor:pointer;width:100%}
 .lib-row:hover{background:var(--hover)}
 .lib-row.on{background:var(--sel)}
-.lib-row.on .lib-name{color:var(--accent)}
-.cover{display:block;border-radius:6px;overflow:hidden;flex:none;background:var(--panel-2)}
+.lib-row.on .lib-name{color:var(--fg)}
+.cover{display:block;border-radius:6px;overflow:hidden;flex:none;background:var(--cover);box-shadow:inset 0 0 0 1px var(--line)}
 .cover svg{display:block;width:100%;height:100%}
 .cover.sm{width:48px;height:48px;border-radius:5px}
 .cover.lg{width:132px;height:132px;border-radius:8px;box-shadow:0 14px 34px rgba(var(--shadow),0.2)}
@@ -146,7 +147,7 @@ input,textarea,select{font:inherit;color:var(--fg)}
 
 /* main list */
 .main{overflow:auto;--cols:24px 36px minmax(0,1fr) 26px 66px}
-.top-grad{background:linear-gradient(180deg,color-mix(in srgb,var(--a) 50%,var(--panel)) 0%,color-mix(in srgb,var(--a) 14%,var(--panel)) 72%,var(--panel) 100%);padding:26px 20px 4px}
+.top-grad{background:var(--panel);border-bottom:1px solid var(--line);padding:26px 20px 14px}
 .list-hero{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
 .hero-txt{min-width:0;flex:1 1 180px;display:flex;flex-direction:column;gap:6px}
 .eyebrow{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.02em}
@@ -159,9 +160,9 @@ input,textarea,select{font:inherit;color:var(--fg)}
 .avs .av+.av{margin-left:-7px}
 .av{width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;background:var(--c);color:#16120B;font-size:11px;font-weight:700;border:2px solid var(--panel);flex:none}
 .actions{display:flex;align-items:center;gap:10px;padding:18px 0 12px;flex-wrap:wrap}
-.play-big{width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(var(--shadow),0.14);transition:transform .12s}
+.play-big{width:46px;height:46px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;cursor:pointer;transition:transform .12s}
 .play-big:hover{transform:scale(1.05)}
-.play-big .ic{width:24px;height:24px}
+.play-big .ic{width:20px;height:20px}
 .rows-head{position:sticky;top:0;z-index:1;display:grid;grid-template-columns:var(--cols);gap:12px;padding:8px 20px;background:var(--panel);border-bottom:1px solid var(--line);color:var(--muted);font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .rows-head span:first-child{text-align:center}
 .rows-head .col-date{text-align:right}
@@ -860,31 +861,31 @@ function icon(n, cls = '') {
 }
 
 const CATS = {
-  food:{label:'Food',icon:'food',color:'#A64B29'},
-  drink:{label:'Drinks',icon:'drink',color:'#85580B'},
-  coffee:{label:'Coffee',icon:'coffee',color:'#86573A'},
-  sight:{label:'Sights',icon:'sight',color:'#3B6A8E'},
-  shop:{label:'Shops',icon:'shop',color:'#9E436C'},
-  nature:{label:'Outdoors',icon:'nature',color:'#356B43'},
-  stay:{label:'Stay',icon:'stay',color:'#5459A3'},
-  activity:{label:'Activity',icon:'activity',color:'#76690F'}
+  food:{label:'Food',icon:'food',color:'#556274'},
+  drink:{label:'Drinks',icon:'drink',color:'#556274'},
+  coffee:{label:'Coffee',icon:'coffee',color:'#556274'},
+  sight:{label:'Sights',icon:'sight',color:'#556274'},
+  shop:{label:'Shops',icon:'shop',color:'#556274'},
+  nature:{label:'Outdoors',icon:'nature',color:'#556274'},
+  stay:{label:'Stay',icon:'stay',color:'#556274'},
+  activity:{label:'Activity',icon:'activity',color:'#556274'}
 };
 const cat = k => CATS[k] || CATS.sight;
 const TYPE = {trip:'Trip', guide:'Guide', wishlist:'Wishlist', all:'Collection'};
 const PALETTES = [['#CFEBDD','#8CCAAE'],['#F8DCCB','#EFA785'],['#DCEAF2','#94BEDA'],['#F6E7BE','#E2BC63'],['#E6E2F5','#AFA5DE'],['#E2EED6','#A9CB93'],['#F5DDE6','#DFA0B8']];
-/* Lists made before the colour change carry the old dark pairs; show them in the matching soft pair. */
-const OLD_COLORS = {'#3E8E7E':0, '#2F7F86':0, '#D9653B':1, '#5B7FB8':2, '#A7783F':3, '#C98A2B':3, '#8A5A9E':4, '#7E8A3A':5, '#B4584E':6};
-const listColors = l => { const c = (l && l.colors) || PALETTES[0]; const i = OLD_COLORS[String(c[0]).toUpperCase()]; return i == null ? c : PALETTES[i]; };
-const AV_COLORS = ['#F2A27F','#9DC3DA','#A3D3B9','#E7B3CC','#EBCB7E','#B9BDEB'];
-const ALL = {id:'all', name:'Everything', type:'all', colors:['#CFEBDD','#6DB896'], desc:'Everything you have saved, across all your lists.', collab:[], pins:[]};
+/* Every cover uses the same quiet tint; lists are told apart by their shape and name, not colour. */
+const COVER = '#E9EEF5';
+const listColors = () => [COVER, COVER];
+const AV_COLORS = ['#D6DEE9','#E4D9D3','#D5E2DA','#E2D7DF','#E3DDCB','#D9D9E8'];
+const ALL = {id:'all', name:'Everything', type:'all', colors:['#E9EEF5','#E9EEF5'], desc:'Everything you have saved, across all your lists.', collab:[], pins:[]};
 
 /* ---------- item kinds: places plus anything else ---------- */
 const KINDS = {
-  place:{label:'Place', plural:'places', icon:'pin', color:'#256E58'},
-  film:{label:'Film', plural:'films', icon:'film', color:'#A64B29'},
-  tv:{label:'TV', plural:'shows', icon:'tv', color:'#5459A3'},
-  book:{label:'Book', plural:'books', icon:'book', color:'#356B43'},
-  other:{label:'Other', plural:'other', icon:'bookmark', color:'#9E436C'}
+  place:{label:'Place', plural:'places', icon:'pin', color:'#556274'},
+  film:{label:'Film', plural:'films', icon:'film', color:'#556274'},
+  tv:{label:'TV', plural:'shows', icon:'tv', color:'#556274'},
+  book:{label:'Book', plural:'books', icon:'book', color:'#556274'},
+  other:{label:'Other', plural:'other', icon:'bookmark', color:'#556274'}
 };
 const kindOf = p => (p && KINDS[p.kind]) ? p.kind : 'place';
 const isPlace = p => kindOf(p) === 'place';
@@ -1687,9 +1688,9 @@ function cover(l) {
   const gid = 'g' + uid();
   const [a, b] = listColors(l);
   let grid = '';
-  for (let i = 1; i < 5; i++) grid += `<path d="M${i * 20} 0V100M0 ${i * 20}H100" stroke="rgba(30,43,39,.06)" stroke-width="1"/>`;
+  for (let i = 1; i < 5; i++) grid += `<path d="M${i * 20} 0V100M0 ${i * 20}H100" stroke="rgba(15,28,46,.06)" stroke-width="1"/>`;
   const head = `<svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="100" height="100" fill="url(#${gid})"/>${grid}`;
-  if (l.id === 'all') return head + `<g transform="translate(26 26) scale(2)" fill="none" stroke="#1E2B27" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${ICONS.list}"/></g></svg>`;
+  if (l.id === 'all') return head + `<g transform="translate(26 26) scale(2)" fill="none" stroke="#1E3A5F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${ICONS.list}"/></g></svg>`;
   const pts = l.pins.filter(p => isPlace(p) && hasLoc(p)).map(p => proj(p.lat, p.lng));
   let shape = '';
   if (!pts.length) {
@@ -1697,8 +1698,8 @@ function cover(l) {
     const media = l.pins.filter(p => !isPlace(p)).slice(0, 6);
     if (media.length) {
       const w = 78 / media.length;
-      shape = media.map((p, i) => { const h = 34 + (itemHue(p) % 30); return `<rect x="${(11 + i * w).toFixed(1)}" y="${(84 - h).toFixed(1)}" width="${(w - 3).toFixed(1)}" height="${h}" rx="2" fill="hsl(${itemHue(p)} 40% 52%)"/>`; }).join('')
-        + '<rect x="8" y="84" width="84" height="3" rx="1.5" fill="rgba(30,43,39,.7)"/>';
+      shape = media.map((p, i) => { const h = 34 + (itemHue(p) % 30); return `<rect x="${(11 + i * w).toFixed(1)}" y="${(84 - h).toFixed(1)}" width="${(w - 3).toFixed(1)}" height="${h}" rx="2" fill="hsl(214 ${18 + itemHue(p) % 14}% ${56 + itemHue(p) % 16}%)"/>`; }).join('')
+        + '<rect x="8" y="84" width="84" height="3" rx="1.5" fill="rgba(15,28,46,.55)"/>';
       return head + shape + '</svg>';
     }
   }
@@ -1707,8 +1708,8 @@ function cover(l) {
     const mx = (Math.min(...xs) + Math.max(...xs)) / 2, my = (Math.min(...ys) + Math.max(...ys)) / 2;
     const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) || 1;
     const P2 = pts.map(([x, y]) => [50 + (x - mx) / span * 62, 50 + (y - my) / span * 62]);
-    if (l.type === 'trip' && P2.length > 1) shape += `<polyline points="${P2.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="rgba(30,43,39,.6)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
-    shape += P2.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === 0 && l.type === 'trip' ? 4.4 : 3.2}" fill="#FFFCF6" stroke="#1E2B27" stroke-width="1.4"/>`).join('');
+    if (l.type === 'trip' && P2.length > 1) shape += `<polyline points="${P2.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="rgba(15,28,46,.55)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    shape += P2.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === 0 && l.type === 'trip' ? 4.4 : 3.2}" fill="#FFFFFF" stroke="#1E3A5F" stroke-width="1.4"/>`).join('');
   }
   return head + shape + '</svg>';
 }
@@ -1758,7 +1759,7 @@ function rowHTML(x, i, showList) {
   ${fo ? `<button type="button" class="icon-btn row-save ${got ? 'on' : ''}" data-action="save-pin" data-id="${x.p.id}" aria-label="${got ? `${esc(x.p.name)} is in your lists. Save to another list` : `Save ${esc(x.p.name)} to my lists`}" title="${got ? 'In your lists' : 'Save to my lists'}">${icon(got ? 'check' : 'bookmark')}</button></div>` : '</button>'}`;
 }
 /* ---------- same place across lists, map previews, and the "Across PinIt" example ---------- */
-const TYPE_COLOR = {trip:'#A4472E', guide:'#356B43', wishlist:'#3B6A8E'};
+const TYPE_COLOR = {trip:'#B0472C', guide:'#2B6A55', wishlist:'#2D5C92'};
 const normName = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 function shortArea(addr) {
   const parts = String(addr || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -2472,7 +2473,7 @@ function syncMap() {
     V.mapKey = key; V.mapScope = scope;
     const multi = V.q || V.list === 'all';
     MAP.setPins(items.map(x => ({id:x.p.id, lat:x.p.lat, lng:x.p.lng, label:x.p.name, cat:x.p.cat, want:x.p.status === 'want', num:isTrip ? x.n : null,
-      color:multi ? listColors(x.l)[1] : 'var(--pin)'})), {route:isTrip && V.route, dropAll:scopeChanged && !typing, dropIds:V.dropIds});
+      color:'var(--pin)'})), {route:isTrip && V.route, dropAll:scopeChanged && !typing, dropIds:V.dropIds});
     V.dropIds = null;
     if (scopeChanged && items.length) fitCurrent(true);
   }
@@ -2663,13 +2664,13 @@ function createSketchMap(el, h) {
 
 /* ---------- Google Maps (used when an API key is set) ---------- */
 const GSTYLE = [
-  {elementType:'geometry', stylers:[{color:'#ECE6D8'}]},
-  {elementType:'labels.text.fill', stylers:[{color:'#56655E'}]},
-  {elementType:'labels.text.stroke', stylers:[{color:'#F7F2E8'}]},
+  {elementType:'geometry', stylers:[{color:'#EDF0F4'}]},
+  {elementType:'labels.text.fill', stylers:[{color:'#556274'}]},
+  {elementType:'labels.text.stroke', stylers:[{color:'#F7F9FB'}]},
   {featureType:'road', elementType:'geometry', stylers:[{color:'#FFFDF8'}]},
-  {featureType:'road.highway', elementType:'geometry', stylers:[{color:'#F6E6D2'}]},
-  {featureType:'water', elementType:'geometry', stylers:[{color:'#C5DDE5'}]},
-  {featureType:'poi.park', elementType:'geometry', stylers:[{color:'#CFE5CF'}]},
+  {featureType:'road.highway', elementType:'geometry', stylers:[{color:'#E4E9F0'}]},
+  {featureType:'water', elementType:'geometry', stylers:[{color:'#CFDDEC'}]},
+  {featureType:'poi.park', elementType:'geometry', stylers:[{color:'#DCEADF'}]},
   {featureType:'poi', elementType:'labels.icon', stylers:[{saturation:-70},{lightness:-15}]},
   {featureType:'transit', stylers:[{visibility:'simplified'}]}
 ];
@@ -2696,10 +2697,10 @@ function createGoogleMap(el, h) {
   el.innerHTML = '';
   const g = google.maps;
   const map = new g.Map(el, {center:{lat:51.51, lng:-0.1}, zoom:12, styles:GSTYLE, disableDefaultUI:true, zoomControl:true,
-    zoomControlOptions:{position:g.ControlPosition.RIGHT_BOTTOM}, clickableIcons:true, gestureHandling:'greedy', backgroundColor:'#ECE6D8'});
+    zoomControlOptions:{position:g.ControlPosition.RIGHT_BOTTOM}, clickableIcons:true, gestureHandling:'greedy', backgroundColor:'#EDF0F4'});
   let pins = [], sel = null, temp = null, tempEl = null, drop = false;
   const els = new Map();
-  const line = new g.Polyline({map, strokeColor:'#256E58', strokeOpacity:.8, strokeWeight:3});
+  const line = new g.Polyline({map, strokeColor:'#1E3A5F', strokeOpacity:.75, strokeWeight:3});
   class Layer extends g.OverlayView {
     onAdd() { this.div = document.createElement('div'); this.div.className = 'pin-layer g'; this.getPanes().overlayMouseTarget.appendChild(this.div); attach(); }
     draw() {
