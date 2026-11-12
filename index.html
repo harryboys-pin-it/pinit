@@ -800,6 +800,31 @@ div.row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
   .lib-foot .lf-l{overflow:hidden;text-overflow:ellipsis}
 }
 .actions:not(:has(button)){display:none}
+.unread{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pin);margin-left:6px;flex:none;vertical-align:middle}
+.chat-btn{position:relative}
+.chat-btn .unread{position:absolute;top:-2px;right:-2px;margin:0;width:10px;height:10px;border:2px solid var(--panel)}
+.modal:has(.chat){padding:0;overflow:hidden;display:flex}
+.chat{display:flex;flex-direction:column;min-height:0;width:100%;height:min(620px,calc(100dvh - 32px))}
+.chat-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 16px 10px 20px;border-bottom:1px solid var(--line)}
+.chat-head h2{margin:0}
+.chat-head .sub{margin:2px 0 0}
+.chat-body{flex:1;min-height:0;overflow:auto;padding:14px 20px;display:flex;flex-direction:column;gap:12px}
+.chat-body>.g-empty{margin:auto;text-align:center;max-width:30ch}
+.msg{display:flex;gap:9px;align-items:flex-start;max-width:88%}
+.msg .av{width:26px;height:26px;font-size:12px;flex:none;margin-top:2px}
+.msg-b{min-width:0;background:var(--panel-2);border-radius:4px 14px 14px 14px;padding:7px 11px 8px}
+.msg-h{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}
+.msg-h b{color:var(--fg);font-size:12.5px}
+.msg p{margin:2px 0 0;font-size:14px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.mine{align-self:flex-end}
+.msg.mine .msg-b{background:var(--sel);border-radius:14px 4px 14px 14px}
+.msg-del{border:0;background:none;color:var(--muted);cursor:pointer;padding:2px;display:grid;margin-left:auto}
+.msg-del .ic{width:13px;height:13px}
+.chat-form{display:flex;gap:8px;padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.chat-form input{flex:1;min-width:0;height:42px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);padding:0 16px;font-size:16px;outline:0}
+.chat-form input:focus{border-color:var(--accent)}
+.chat-form .btn-accent{height:42px}
+@media (max-width:860px){.chat{height:min(86dvh,700px)}.actions .chat-btn{overflow:visible}}
 </style>
 
 <div class="app" id="app">
@@ -875,6 +900,7 @@ const ICONS = {
   users:'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.7',
   globe:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z',
   share:'M4 12v8h16v-8M12 3v13M7 8l5-5 5 5',
+  chat:'M20 11.5a7.5 7.5 0 0 1-11 6.6L4 20l1.4-4.2A7.5 7.5 0 1 1 20 11.5z',
   close:'M6 6l12 12M18 6L6 18',
   library:'M4 4v16M9 4v16M14 5l5 15',
   map:'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
@@ -1520,6 +1546,63 @@ function setNick(name) {
   if (typeof renderAccount === 'function') renderAccount();
   if (STORE.on && STORE.canWrite && !STORE.platformName) put('people/' + ME.id, {nick:name});
 }
+/* ---------- chat: one conversation per shared list ---------- */
+const CHAT = {msgs:new Map(), latest:new Map(), open:null, seenKey:'pinit-chat-seen'};
+const chatOn = l => !!l && STORE.kind === 'hosted' && !!STORE.chat && l.remote && l.vis === 'shared' && l.role !== 'viewer';
+function chatSeen() { try { const o = JSON.parse(lsGet(CHAT.seenKey) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+function markChatSeen(listId) { const t = CHAT.latest.get(listId); if (!t) return; const o = chatSeen(); if (o[listId] === t.id) return; o[listId] = t.id; lsSet(CHAT.seenKey, JSON.stringify(o)); }
+const chatUnread = l => { if (!chatOn(l)) return false; const t = CHAT.latest.get(l.id); return !!t && t.by !== ME.id && (chatSeen()[l.id] || 0) < t.id; };
+function initChat() {
+  STORE.chat.on((type, row, old) => {
+    if (type === 'DELETE') { const id = old && +old.id; for (const arr of CHAT.msgs.values()) { const i = arr.findIndex(m => m.id === id); if (i >= 0) arr.splice(i, 1); } if (CHAT.open) renderChat(); return; }
+    if (!row || !row.list_id) return;
+    const m = {id:+row.id, listId:String(row.list_id), by:String(row.user_id || ''), body:String(row.body || '').slice(0, 1000), at:String(row.created_at || '')};
+    const arr = CHAT.msgs.get(m.listId); if (arr && !arr.some(x => x.id === m.id)) arr.push(m);
+    const t = CHAT.latest.get(m.listId); if (!t || t.id < m.id) CHAT.latest.set(m.listId, {id:m.id, by:m.by});
+    if (CHAT.open === m.listId) { markChatSeen(m.listId); renderChat(true); } else softRender();
+  });
+  refreshChatLatest();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshChatLatest(); if (CHAT.open) loadChat(CHAT.open); } });
+}
+async function refreshChatLatest() { try { CHAT.latest = await STORE.chat.latest(); softRender(); } catch (e) {} }
+async function loadChat(listId) {
+  try { CHAT.msgs.set(listId, await STORE.chat.load(listId)); const arr = CHAT.msgs.get(listId); const last = arr[arr.length - 1]; if (last) CHAT.latest.set(listId, {id:last.id, by:last.by}); CHAT.failed = false; }
+  catch (e) { CHAT.failed = true; }
+  if (CHAT.open === listId) { markChatSeen(listId); renderChat(true); }
+}
+function chatTime(iso) {
+  const d = new Date(iso); if (isNaN(d)) return '';
+  const hm = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  return d.toDateString() === new Date().toDateString() ? hm : d.toLocaleDateString('en-GB', {day:'numeric', month:'short'}) + ', ' + hm;
+}
+function chatBodyHTML(l) {
+  const arr = CHAT.msgs.get(l.id);
+  if (!arr) return CHAT.failed ? '<p class="g-empty">Could not load the chat. Check your connection and open it again.</p>' : '<p class="g-empty">Loading</p>';
+  if (!arr.length) return '<p class="g-empty">No messages yet. Say hello, or sort out who is booking what.</p>';
+  return arr.map(m => { const mine = m.by === ME.id; const n = nameOf(m.by);
+    return `<div class="msg ${mine ? 'mine' : ''}">${mine ? '' : avatar(n)}<div class="msg-b"><div class="msg-h"><b>${esc(n)}</b><span>${esc(chatTime(m.at))}</span>${mine ? `<button type="button" class="msg-del" data-action="chat-del" data-id="${m.id}" aria-label="Delete this message" title="Delete">${icon('trash')}</button>` : ''}</div><p>${esc(m.body)}</p></div></div>`; }).join('');
+}
+function chatHTML(l) {
+  const n = 1 + (l.memberIds || []).length;
+  return `<div class="chat"><div class="chat-head"><div><h2>Chat</h2><p class="sub">${esc(l.name)} · ${n === 1 ? 'Only you so far. Share the list to bring people in.' : `Everyone on this list (${n}) can read and write here.`}</p></div><button type="button" class="icon-btn" data-action="modal-close" aria-label="Close chat">${icon('close')}</button></div>
+    <div class="chat-body" id="chatBody" aria-live="polite">${chatBodyHTML(l)}</div>
+    <form class="chat-form" data-form="chat"><input id="chatInput" name="m" maxlength="1000" autocomplete="off" placeholder="Message everyone on the list" aria-label="Message"><button type="submit" class="btn-accent">Send</button></form></div>`;
+}
+function renderChat(toEnd) {
+  const l = getList(CHAT.open); const el = $('#chatBody');
+  if (!l || !chatOn(l)) { if (el) { CHAT.open = null; closeModal(); } return; }
+  if (!el) return;
+  const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  el.innerHTML = chatBodyHTML(l);
+  if (toEnd && near || !el.dataset.init) { el.scrollTop = el.scrollHeight; el.dataset.init = '1'; }
+}
+function openChat(l) {
+  CHAT.open = l.id; CHAT.failed = false;
+  openModal(chatHTML(l), matchMedia('(max-width:860px)').matches ? null : '#chatInput');
+  const el = $('#chatBody'); if (el) el.scrollTop = el.scrollHeight;
+  markChatSeen(l.id); renderMain(); renderLibrary();
+  loadChat(l.id);
+}
 function renderAccount() {
   const el = $('#acctBtn'); if (!el) return;
   const a = STORE.kind === 'hosted' && STORE.account;
@@ -1606,11 +1689,22 @@ async function hostedBackend() {
     }, delay == null ? 150 : delay));
   }
   const refreshAll = () => { for (const p of subs.keys()) refresh(p); };
+  const chatSubs = new Set();
+  const msgRow = r => ({id:+r.id, listId:str(r.list_id, 60), by:str(r.user_id, 120), body:str(r.body, 1000), at:str(r.created_at, 40)});
+  const chat = {
+    on:fn => { chatSubs.add(fn); },
+    load:async listId => { const {data, error} = await sb.from('messages').select('id,list_id,user_id,body,created_at').eq('list_id', listId).order('id', {ascending:false}).limit(200); if (error) throw error; return (data || []).map(msgRow).reverse(); },
+    /* The newest message in each of my lists, to show where there is something unread. */
+    latest:async () => { const {data, error} = await sb.from('messages').select('id,list_id,user_id').order('id', {ascending:false}).limit(300); if (error) throw error; const m = new Map(); for (const r of data || []) if (!m.has(r.list_id)) m.set(r.list_id, {id:+r.id, by:r.user_id}); return m; },
+    send:(listId, body) => rpc('post_message', {p_list:listId, p_body:body}),
+    remove:id => rpc('delete_message', {p_id:id})
+  };
   sb.channel('pinit')
     .on('postgres_changes', {event:'*', schema:'public', table:'lists'}, () => refresh('lists'))
     .on('postgres_changes', {event:'*', schema:'public', table:'list_members'}, () => { refresh('lists'); refresh('people'); })
     .on('postgres_changes', {event:'*', schema:'public', table:'items'}, p => { const id = (p.new && p.new.list_id) || (p.old && p.old.list_id); if (id) refresh('lists/' + id + '/items'); })
     .on('postgres_changes', {event:'*', schema:'public', table:'profiles'}, () => refresh('people'))
+    .on('postgres_changes', {event:'*', schema:'public', table:'messages'}, p => { for (const fn of chatSubs) { try { fn(p.eventType, p.new || null, p.old || null); } catch (e) {} } })
     .subscribe();
   /* Phones drop the live connection when the screen sleeps, so catch up whenever the page comes back. */
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshAll(); });
@@ -1677,7 +1771,7 @@ async function hostedBackend() {
     if (error) throw error;
     return {id};
   }};
-  return {db, user, assets, account, signIn, signOut, claimed, myName, linkError,
+  return {db, user, assets, chat, account, signIn, signOut, claimed, myName, linkError,
     removeMembers:id => rpc('remove_members', {p_id:id}),
     assetUrl:id => CFG.supabaseUrl.replace(/\/+$/, '') + '/storage/v1/object/public/photos/' + id,
     join:async id => { const ok = await rpc('join_list', {p_id:id}); refresh('lists', 0); refresh('people'); return ok === true; },
@@ -1752,7 +1846,8 @@ async function initStore() {
       const b = await hostedBackend();
       db = b.db; user = b.user; assets = b.assets;
       Object.assign(STORE, {kind:'hosted', assetUrl:b.assetUrl, join:b.join, leave:b.leave, stats:b.stats, peek:b.peek, setName:b.setName,
-        account:b.account, signIn:b.signIn, signOut:b.signOut, removeMembers:b.removeMembers});
+        account:b.account, signIn:b.signIn, signOut:b.signOut, removeMembers:b.removeMembers, chat:b.chat});
+      initChat();
       if (b.myName && !lsGet(NICK_KEY)) lsSet(NICK_KEY, b.myName);
       if (b.linkError) setTimeout(() => toast('That sign-in link has expired or was already used. Send yourself a new one.'), 600);
       if (b.claimed) setTimeout(() => toast(`Moved ${b.claimed} list${b.claimed === 1 ? '' : 's'} from this browser into your account`), 900);
@@ -1864,7 +1959,7 @@ function renderLibrary() {
   const lists = S.lists.filter(l => f === 'all' || l.type === f);
   const total = S.lists.reduce((n, l) => n + l.pins.length, 0);
   const inner = l => `<span class="cover sm">${cover(l)}</span>
-    <span class="lib-txt"><span class="lib-name">${esc(l.name)}</span>
+    <span class="lib-txt"><span class="lib-name">${esc(l.name)}${chatUnread(l) ? '<i class="unread" title="New chat messages"></i>' : ''}</span>
     <span class="lib-sub">${l.sample ? '<span class="tag-ex">Example</span>' : ''}${l.id === 'all' ? icon('list') : visIcon(l)} ${TYPE[l.type]} · ${isForeign(l) ? `by ${esc(ownerName(l))}` : `${l.id === 'all' ? total : l.pins.length} item${(l.id === 'all' ? total : l.pins.length) === 1 ? '' : 's'}`}</span></span>`;
   const row = l => (V.editLib && l.id !== 'all')
     ? `<div class="lib-row editing ${V.list === l.id && !V.q ? 'on' : ''}">${inner(l)}<button type="button" class="icon-btn del" data-action="delete-list" data-id="${l.id}" aria-label="Delete ${esc(l.name)}" title="Delete list">${icon('trash')}</button></div>`
@@ -2107,6 +2202,7 @@ function listHTML() {
     </div>
     <div class="actions">
       ${l.id !== 'all' && !l.by ? `<button type="button" class="pill act" data-action="share" aria-label="Share">${icon('share')}<span>Share</span></button>` : ''}
+      ${chatOn(l) ? `<button type="button" class="pill act chat-btn" data-action="chat" aria-label="${chatUnread(l) ? 'Chat, new messages' : 'Chat'}">${icon('chat')}<span>Chat</span>${chatUnread(l) ? '<i class="unread"></i>' : ''}</button>` : ''}
       ${ed || l.id === 'all' ? `<button type="button" class="pill act act-add" data-action="add-item">${icon('plus')}<span>Add</span></button>` : ''}
       ${ed && items.length ? `<button type="button" class="pill act ${V.editList ? 'primary' : ''}" data-action="list-edit" aria-pressed="${V.editList}" aria-label="${V.editList ? 'Done editing' : 'Edit the list'}">${V.editList ? `${icon('check')}<span>Done</span>` : `${icon('edit')}<span>Edit</span>`}</button>` : ''}
     </div>
@@ -3373,6 +3469,7 @@ function privacyHTML() {
         : '<li><b>Shared lists</b> are stored with this page on Claude. Everyone you give access to the page can see them, and people with edit access can change them.</li>'}
       <li><b>Photos</b> are resized and their location data is removed before they are saved. Photos on private lists stay on this device.</li>
       <li><b>Maps and search.</b> With Google Maps connected, place searches and details come from Google. Film and book searches go to TMDB and Open Library. Your API keys stay on this device.</li>
+      ${STORE.kind === 'hosted' ? '<li><b>Chat.</b> Each shared list has a chat. Everyone who can add to the list can read it, including people who join later. You can delete your own messages.</li>' : ''}
       <li><b>Saved-in counts.</b> ${STORE.kind === 'hosted' ? 'Each pin shows how many lists it is saved in, by type of list. The count covers shared lists only and is just a number: nobody can see which lists, whose they are or what else is in them. Private lists are never counted for anyone but you.' : 'Each pin shows how many of the lists you can see include it.'}</li>
       <li><b>No ads, analytics or tracking.</b></li>
       <li><b>Deleting.</b> Deleting a pin or a shared list removes it for everyone. Reset this device clears the lists, notes and photos PinIt has stored in this browser, and leaves shared lists alone.</li>
@@ -3416,7 +3513,7 @@ function openModal(html, focusSel) {
 }
 function closeModal(force) {
   if (V.askName && !force) { if (V.askName.required) return; finishAskName(''); return; }
-  $('#modalBack').hidden = true; $('#modal').innerHTML = '';
+  $('#modalBack').hidden = true; $('#modal').innerHTML = ''; CHAT.open = null;
   if (V.pi) { V.pi.urls.forEach(u => URL.revokeObjectURL(u)); V.pi = null; }
   if (MAP && !V.preview) MAP.setTemp(null);
 }
@@ -3597,6 +3694,8 @@ const ACTIONS = {
   'zoom-out': () => MAP && MAP.zoomBy(-1),
   'tab': t => { V.tab = t.dataset.t; document.body.dataset.tab = V.tab; updateMini(); renderNav(); if (V.tab === 'map' || document.body.classList.contains('mini')) afterMapShown(); },
   'new-list': () => openModal(newListHTML(), '#nlName'),
+  'chat': () => { const l = getList(V.list); if (l && chatOn(l)) openChat(l); },
+  'chat-del': async t => { try { await STORE.chat.remove(+t.dataset.id); if (CHAT.open) loadChat(CHAT.open); } catch (e) { toast('Could not delete that message.'); } },
   'share': () => { const l = getList(V.list); if (l) openModal(shareHTML(l), null); },
   'edit-pin': t => { const f = findPin(t.dataset.id); if (!f || !canEdit(f.l)) return; if (isPlace(f.p)) openPinForm({pin:f.p, lat:f.p.lat, lng:f.p.lng}); else openItemForm(f.p); },
   'add-item': () => openAdd(),
@@ -3800,6 +3899,13 @@ document.addEventListener('submit', async e => {
     const text = String(fd.get('m') || '').trim(); const fp = findPin(f.dataset.id); if (!text || !fp || !canEdit(fp.l)) return;
     fp.p.memories.push({by:'You', text}); save(); renderDetail();
     const inp = $('#memInput'); if (inp) inp.focus();
+  } else if (kind === 'chat') {
+    const inp = $('#chatInput'); const text = String(fd.get('m') || '').trim().slice(0, 1000); const id = CHAT.open;
+    if (!text || !id) return;
+    const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
+    try { await STORE.chat.send(id, text); inp.value = ''; await loadChat(id); const el = $('#chatBody'); if (el) el.scrollTop = el.scrollHeight; }
+    catch (err) { toast(/slow down/.test(String(err && err.message)) ? 'You are sending messages too quickly. Wait a moment.' : 'Could not send. Check your connection and try again.'); }
+    btn.disabled = false; inp.focus();
   } else if (kind === 'sign-in') {
     const email = String(fd.get('email') || '').trim().toLowerCase();
     const er = $('#signInErr'); const btn = f.querySelector('button[type=submit]');

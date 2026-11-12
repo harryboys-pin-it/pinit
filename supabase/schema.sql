@@ -278,12 +278,52 @@ end $$;
 revoke all on function public.remove_members(text), public.create_claim(), public.redeem_claim(text) from public, anon;
 grant execute on function public.remove_members(text), public.create_claim(), public.redeem_claim(text) to authenticated;
 
+-- ---------- chat ----------
+-- One conversation per shared list, for the people who can add to it. Viewers of a public guide get no chat.
+create table if not exists public.messages (
+  id bigint generated always as identity primary key,
+  list_id text not null references public.lists (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  body text not null check (char_length(body) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+create index if not exists messages_list_idx on public.messages (list_id, id desc);
+alter table public.messages enable row level security;
+
+drop policy if exists "people on the list read its chat" on public.messages;
+create policy "people on the list read its chat" on public.messages for select to authenticated using (public.can_edit(list_id));
+
+revoke all on public.messages from anon, authenticated;
+grant select on public.messages to authenticated;
+
+create or replace function public.post_message(p_list text, p_body text) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare b text := btrim(coalesce(p_body, '')); new_id bigint;
+begin
+  if not can_edit(p_list) then raise exception 'not on this list'; end if;
+  if not exists (select 1 from lists where id = p_list and coalesce(data->>'vis', '') = 'shared') then raise exception 'this list has no chat'; end if;
+  if b = '' or char_length(b) > 1000 then raise exception 'message must be 1 to 1000 characters'; end if;
+  if (select count(*) from messages where user_id = auth.uid() and created_at > now() - interval '1 minute') >= 30 then raise exception 'slow down'; end if;
+  insert into messages (list_id, user_id, body) values (p_list, auth.uid(), b) returning id into new_id;
+  delete from messages where list_id = p_list and id <= new_id - 2000;
+  return new_id;
+end $$;
+
+create or replace function public.delete_message(p_id bigint) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  delete from messages where id = p_id and user_id = auth.uid();
+end $$;
+
+revoke all on function public.post_message(text, text), public.delete_message(bigint) from public, anon;
+grant execute on function public.post_message(text, text), public.delete_message(bigint) to authenticated;
+
 -- ---------- live updates ----------
 do $$
 declare t text;
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
-    foreach t in array array['lists', 'items', 'list_members', 'profiles'] loop
+    foreach t in array array['lists', 'items', 'list_members', 'profiles', 'messages'] loop
       if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t) then
         execute format('alter publication supabase_realtime add table public.%I', t);
       end if;
