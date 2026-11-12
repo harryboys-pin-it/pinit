@@ -752,6 +752,53 @@ div.row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .sc-txt{display:flex;flex-direction:column;gap:3px;min-width:0;width:100%}
 .sc-s{display:block}
 @media (max-width:860px){ .shelf{padding:62px 14px 20px} .shelf-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* phone: a compact header so the list itself starts high on the screen */
+@media (max-width:860px){
+  body.mini[data-tab="list"] .mapwrap{height:132px;min-height:0}
+  .top-grad,body.mini[data-tab="list"] .top-grad{padding:10px 14px 8px}
+  .list-hero{gap:10px}
+  .hero-txt{gap:3px}
+  .eyebrow{font-size:11px}
+  .list-hero h1,.search-head h1{font-size:20px;line-height:1.15;letter-spacing:-.01em}
+  .list-hero h1 .pen{width:24px;height:24px}
+  .ed-title{font-size:20px}
+  .desc{margin:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+  .desc .pen{display:none}
+  .desc.open{white-space:normal;overflow:visible}
+  .desc.open .pen{display:inline-grid}
+  .meta{font-size:12px;margin-top:1px;gap:5px}
+  .meta .av{width:20px;height:20px;font-size:10px}
+  .meta .pen{width:22px;height:22px}
+  .meta .avs+span{display:none}
+  .actions{padding:8px 0 2px;gap:8px}
+  .play-big{width:40px;height:40px}
+  .play-big .ic{width:17px;height:17px}
+  .actions .icon-btn.lg{width:40px;height:40px}
+  .actions .act{width:40px;height:40px;padding:0;justify-content:center}
+  .actions .act span{display:none}
+  .actions .act.primary{width:auto;padding:0 14px}
+  .actions .act.primary span{display:inline}
+  .actions .act-add{display:none}
+  .info-card{margin:8px 10px}
+  .info-head{padding:9px 12px;font-size:13px}
+  .st-filter{padding:0 10px 6px}
+  .st-filter .chip{height:30px;font-size:12.5px}
+  .rows-head:not(.edit-hint){display:none}
+  .rows{padding:0 4px 16px}
+  .day-h{padding:10px 10px 4px}
+  .ro-note{margin:8px 10px 0;padding:8px 10px;font-size:12px}
+  .detail{gap:11px;padding-top:12px}
+  .d-name{font-size:20px}
+  .detail .coords{display:none}
+  .detail .save-btn{min-height:40px}
+  #privNote{min-height:44px;height:44px}
+  .lib-row{padding:5px 8px}
+  .cover.sm{width:42px;height:42px}
+  .lib-foot{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .lib-foot .pill{margin:0;padding:0 8px;font-size:12px;min-width:0;overflow:hidden}
+  .lib-foot>span{grid-column:1 / -1}
+  .lib-foot .lf-l{overflow:hidden;text-overflow:ellipsis}
+}
 </style>
 
 <div class="app" id="app">
@@ -1825,7 +1872,7 @@ function renderLibrary() {
     <div class="lib-head"><h2>${icon('library')} Your lists</h2><span class="lib-head-btns">${S.lists.length ? `<button type="button" class="txt-btn ${V.editLib ? 'on' : ''}" data-action="lib-edit" aria-pressed="${V.editLib}">${V.editLib ? 'Done' : 'Edit'}</button>` : ''}<button type="button" class="icon-btn" data-action="import" aria-label="Import from Google Maps" title="Import from Google Maps">${icon('import')}</button><button type="button" class="icon-btn" data-action="new-list" aria-label="New list" title="New list">${icon('plus')}</button></span></div>
     <div class="chips">${[['all','All'],['trip','Trips'],['guide','Guides'],['wishlist','Wishlists']].map(([k, t]) => `<button type="button" class="chip ${f === k ? 'on' : ''}" data-action="filter" data-f="${k}">${t}</button>`).join('')}</div>
     <div class="lib-list">${f === 'all' ? row(ALL) : ''}${lists.map(row).join('') || '<p class="muted" style="padding:8px 10px;margin:0">No lists of this type yet.</p>'}</div>
-    <div class="lib-foot"><button type="button" class="pill sm" data-action="photo-import">${icon('photos')} Import trip photos</button><button type="button" class="pill sm" data-action="import">${icon('import')} Import from Google Maps</button>${accountOn() ? 'Your lists are saved to your account.' : STORE.kind === 'hosted' && STORE.on ? 'Private lists stay on this device. <button type="button" class="link-btn" data-action="account">Sign in</button> to keep them everywhere.' : STORE.on ? 'Shared lists update for everyone with access. Private lists stay on this device.' : 'Your lists are saved in this browser only.'}</div>`;
+    <div class="lib-foot"><button type="button" class="pill sm" data-action="photo-import">${icon('photos')} <span class="lf-l">Import trip photos</span></button><button type="button" class="pill sm" data-action="import">${icon('import')} <span class="lf-l">Import from Google Maps</span></button><span>${accountOn() ? 'Your lists are saved to your account.' : STORE.kind === 'hosted' && STORE.on ? 'Private lists stay on this device. <button type="button" class="link-btn" data-action="account">Sign in</button> to keep them everywhere.' : STORE.on ? 'Shared lists update for everyone with access. Private lists stay on this device.' : 'Your lists are saved in this browser only.'}</span></div>`;
 }
 function rowHTML(x, i, showList) {
   const cls = (x.p.id === V.sel ? ' sel' : '') + (x.p.id === V.sel && V.playing ? ' playing' : '');
@@ -2052,7 +2099,7 @@ function listHTML() {
           : `<h1>${esc(l.name)}${ed ? `<button type="button" class="pen" data-action="edit-list-field" data-f="name" aria-label="Rename list" title="Rename">${icon('edit')}</button>` : ''}</h1>`}
         ${l.id !== 'all' && V.editing === 'desc'
           ? `<textarea id="ldInput" class="ed-desc" rows="2" maxlength="160" placeholder="What is this list for?" aria-label="List description">${esc(l.desc || '')}</textarea><span class="ed-hint">Enter to save · Esc to cancel</span>`
-          : l.desc ? `<p class="desc">${esc(l.desc)}${ed ? `<button type="button" class="pen" data-action="edit-list-field" data-f="desc" aria-label="Edit description" title="Edit description">${icon('edit')}</button>` : ''}</p>`
+          : l.desc ? `<p class="desc${V.descOpen ? ' open' : ''}" data-action="desc-toggle">${esc(l.desc)}${ed ? `<button type="button" class="pen" data-action="edit-list-field" data-f="desc" aria-label="Edit description" title="Edit description">${icon('edit')}</button>` : ''}</p>`
           : ed ? `<button type="button" class="add-desc" data-action="edit-list-field" data-f="desc">${icon('edit')} Add a description</button>` : ''}
         <div class="meta"><span class="avs">${people.map(n => avatar(n)).join('')}</span><span>${esc(people.join(', '))}</span>${ed ? `<button type="button" class="pen" data-action="edit-people" aria-label="Edit contributors" title="Add or remove people">${icon('edit')}</button>` : ''}<span class="dot">•</span><span>${items.length} item${items.length === 1 ? '' : 's'}</span>${range ? `<span class="dot">•</span><span>${range}</span>` : ''}</div>
       </div>
@@ -2060,9 +2107,9 @@ function listHTML() {
     <div class="actions">
       <button type="button" class="play-big" data-action="play-toggle" aria-label="${V.playing ? 'Pause' : (isTrip ? 'Replay the trip' : 'Tour the list')}" title="${isTrip ? 'Replay the trip pin by pin' : 'Tour the list pin by pin'}" ${items.length ? '' : 'disabled'}>${icon(V.playing ? 'pause' : 'play')}</button>
       <button type="button" class="icon-btn lg" data-action="shuffle" title="Surprise me" aria-label="Surprise me">${icon('shuffle')}</button>
-      ${l.id !== 'all' && !l.by ? `<button type="button" class="pill" data-action="share">${icon('share')} Share</button>` : ''}
-      ${ed || l.id === 'all' ? `<button type="button" class="pill" data-action="add-item">${icon('plus')} Add</button>` : ''}
-      ${ed && items.length ? `<button type="button" class="pill ${V.editList ? 'primary' : ''}" data-action="list-edit" aria-pressed="${V.editList}">${V.editList ? `${icon('check')} Done` : `${icon('edit')} Edit`}</button>` : ''}
+      ${l.id !== 'all' && !l.by ? `<button type="button" class="pill act" data-action="share" aria-label="Share">${icon('share')}<span>Share</span></button>` : ''}
+      ${ed || l.id === 'all' ? `<button type="button" class="pill act act-add" data-action="add-item">${icon('plus')}<span>Add</span></button>` : ''}
+      ${ed && items.length ? `<button type="button" class="pill act ${V.editList ? 'primary' : ''}" data-action="list-edit" aria-pressed="${V.editList}" aria-label="${V.editList ? 'Done editing' : 'Edit the list'}">${V.editList ? `${icon('check')}<span>Done</span>` : `${icon('edit')}<span>Edit</span>`}</button>` : ''}
     </div>
   </div>
   ${l.id !== 'all' && !ed ? `<p class="ro-note">${icon('bookmark')}<span>View only. Tap the bookmark next to anything to save it to one of your own lists.</span></p>` : ''}
@@ -3593,6 +3640,7 @@ const ACTIONS = {
     $('#modal').innerHTML = shareHTML(l); renderLibrary(); renderMain(); renderDetail();
     toast(`Removed ${who} from the list`, () => { l.collab.splice(Math.min(idx, l.collab.length), 0, who); save(); renderLibrary(); renderMain(); renderDetail(); if (!$('#modalBack').hidden) $('#modal').innerHTML = shareHTML(l); });
   },
+  'desc-toggle': () => { V.descOpen = !V.descOpen; const d = $('#main .desc'); if (d) d.classList.toggle('open', V.descOpen); },
   'list-edit': () => { if (!canEdit(getList(V.list))) return; V.editList = !V.editList; V.stFilter = 'all'; stopPlay(); renderMain(); syncMap(); },
   'view-photo': t => openPhotoViewer(t.dataset.id, +t.dataset.i),
   'add-photo': t => { const f = findPin(t.dataset.id); if (!f || !canEdit(f.l)) return; V.photoFor = t.dataset.id; $('#photoInput').click(); },
