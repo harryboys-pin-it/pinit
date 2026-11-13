@@ -1610,15 +1610,34 @@ function renderAccount() {
   if (a.anon) { el.className = 'acct-btn out'; el.innerHTML = `${icon('users')}<span>Sign in</span>`; el.title = 'Sign in to see your lists on any device'; el.setAttribute('aria-label', 'Sign in'); }
   else { el.className = 'acct-btn in'; el.innerHTML = avatar(ME.name || a.email || 'You'); el.title = `Signed in as ${a.email}`; el.setAttribute('aria-label', `Your account, signed in as ${a.email}`); }
 }
-function accountHTML() {
+/* Guests are asked to sign in at the moments it starts to matter: their first list, joining a list, sharing one.
+   At most once a visit, and not again for a day after "Not now". */
+const NUDGE_KEY = 'pinit-nudge';
+function nudgeSignIn(why) {
+  if (STORE.kind !== 'hosted' || !STORE.account || !STORE.account.anon || !STORE.signIn) return;
+  if (V.nudged || lsGet(PENDING_KEY) || Date.now() - (+lsGet(NUDGE_KEY) || 0) < 864e5) return;
+  V.nudged = true;
+  setTimeout(() => {
+    if (!$('#modalBack').hidden || V.askName) { V.nudged = false; return; }
+    lsSet(NUDGE_KEY, String(Date.now()));
+    openModal(accountHTML(why), matchMedia('(max-width:860px)').matches ? null : '#emailInput');
+  }, 700);
+}
+const NUDGE = {
+  list:['Keep this list safe', 'Right now it lives only in this browser. Sign in and it is saved to your account, so it is there on your phone, your laptop, and after you clear this browser.'],
+  join:['See this list on all your devices', 'You have joined as a guest in this browser. Sign in and the list follows you to your phone and laptop, under one name.'],
+  share:['Stay the owner of this list', 'You are sharing as a guest in this browser. Sign in so the list is tied to you, not this browser, and you can manage it from any device.']
+};
+function accountHTML(why) {
   const a = STORE.account || {anon:true, email:''};
   if (!a.anon) return `<h2>Your account</h2><p class="sub">Signed in as <b>${esc(a.email)}</b>. Your lists are saved to your account, so they are here on any device where you sign in.</p>
     <label class="fld"><span>Your name, as other people see it</span><span class="set-inline"><input id="nickInput" maxlength="40" value="${esc(ME.name)}" placeholder="e.g. Sam" autocomplete="given-name"><button type="button" class="pill" data-action="save-nick">Save</button></span></label>
     <p class="imp-note">Example lists stay on each device. Everything else follows you.</p>
     <div class="m-actions"><button type="button" class="ghost" data-action="sign-out">Sign out</button><button type="button" class="btn-accent" data-action="modal-close">Done</button></div>`;
   const pending = lsGet(PENDING_KEY);
-  return `<h2>Sign in</h2><p class="sub">See your lists on any device, and keep them if you clear this browser. No password: we email you a link.</p>
-    ${pending ? `<p class="imp-note sent-note">${icon('check')}<span>We sent a link to <b>${esc(pending)}</b>. Open it to finish signing in. It can take a minute, and may land in spam.</span></p>` : ''}
+  const [nh, ns] = NUDGE[why] || ['Sign in', 'See your lists on any device, and keep them if you clear this browser.'];
+  return `<h2>${nh}</h2><p class="sub">${ns} No password: we email you a link.</p>
+    ${pending ? `<p class="imp-note sent-note">${icon('check')}<span>We sent a link to <b>${esc(pending)}</b>. Open it <b>on this device, in this browser</b>, to finish signing in: the link signs in whichever browser opens it. It can take a minute, and may land in spam.</span></p>` : ''}
     <form data-form="sign-in"><label class="fld"><span>Email address</span><input id="emailInput" name="email" type="email" required maxlength="200" value="${esc(pending)}" placeholder="you@example.com" autocomplete="email" inputmode="email"></label>
     <p class="imp-note" id="signInErr" hidden></p>
     <p class="imp-note">The lists you have on this device come with you. We only use your email to sign you in.</p>
@@ -1746,7 +1765,10 @@ async function hostedBackend() {
   let myName = '';
   try { const r = await sb.from('profiles').select('name').eq('id', uid); myName = str(((r.data || [])[0] || {}).name, 40); } catch (e) {}
   /* Signing in or out in another tab, or finishing sign-in from the email link, reloads into the new account. */
+  let leaving = false;
   sb.auth.onAuthStateChange((ev, s) => {
+    /* The sign-in ended somewhere else (or expired): start again cleanly instead of failing quietly. */
+    if (ev === 'SIGNED_OUT' && !leaving && !account.anon) { leaving = true; location.reload(); return; }
     if (!s || !s.user) return;
     if (s.user.id !== uid || (account.anon && s.user.email && !s.user.is_anonymous)) location.reload();
   });
@@ -1764,7 +1786,8 @@ async function hostedBackend() {
     if (r2.error) throw r2.error;
     return 'signin';
   };
-  const signOut = async () => { await sb.auth.signOut(); };
+  /* Only this browser is signed out. Other devices stay signed in. */
+  const signOut = async () => { leaving = true; await sb.auth.signOut({scope:'local'}); };
   const assets = {async upload(blob) {
     const id = rid() + rid();
     const {error} = await sb.storage.from('photos').upload(id, blob, {contentType:'image/jpeg', cacheControl:'31536000'});
@@ -1833,6 +1856,7 @@ async function joinFromLink() {
     V.joinTarget = null;
     const viewer = !!jl && jl.role === 'viewer';
     toast(viewer ? `${TYPE[jl.type]} added to your lists` : `You have joined ${jl ? jl.name : 'the list'}`);
+    if (!viewer) nudgeSignIn('join');
   } catch (e) { V.joinTarget = null; toast('Could not join that list. Check your connection and open the link again.'); }
 }
 async function initStore() {
@@ -3563,6 +3587,7 @@ function shareHTML(l) {
       : 'Send this link to the people you want on the list. Anyone who opens it can see the list and add pins, notes and photos.'}</p>
       ${mine ? `<div class="fld"><span>People who open the link can</span><div class="seg">${[['shared', 'Add and edit'], ['public', 'View and save only']].map(([v, t]) => `<label class="seg-opt"><input type="radio" name="vis" value="${v}" data-list="${l.id}" ${l.vis === v ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div></div>
       <p class="imp-note">This applies to people who join from now on. People already on the list keep what they had.</p>` : ''}
+      ${mine && STORE.account && STORE.account.anon ? `<p class="imp-note sent-note">${icon('users')}<span>You are sharing as a guest in this browser. <button type="button" class="link-btn" data-action="account">Sign in</button> to stay the owner of this list on any device.</span></p>` : ''}
       <div class="fld"><span>${vo ? 'Link' : 'Invite link'}</span><div class="linkbox"><span id="shareLink">${esc(location.origin + location.pathname + '#join-' + l.id)}</span><button class="pill sm" type="button" data-action="copy-link">${icon('copy')} Copy</button></div></div>
       ${people}
       ${nick}
@@ -3875,7 +3900,7 @@ document.addEventListener('submit', async e => {
     S.lists.unshift(l); save(); closeModal();
     Object.assign(V, {list:l.id, q:'', sel:null, detail:false, filter:'all', stFilter:'all'}); $('#q').value = ''; stopPlay();
     if (isMobile()) V.tab = 'list';
-    render(); toast('List created. Add your first pin.');
+    render(); toast('List created. Add your first pin.'); nudgeSignIn(remote ? 'share' : 'list');
   } else if (kind === 'info') {
     const l = getList(f.dataset.id); if (!l) return;
     l.info = [...f.querySelectorAll('.info-edit-row')].map(r => ({id:uid(), label:r.querySelector('.ie-label').value.trim(), value:r.querySelector('.ie-value').value.trim()}))
@@ -3926,7 +3951,7 @@ document.addEventListener('submit', async e => {
     const acct = accountOn();
     const l = {id:acct ? rid() : uid(), name, type:'wishlist', vis:'private', collab:[], desc:'', colors:PALETTES[S.lists.length % PALETTES.length], pins:[], info:[], remote:acct, created:nowISO()};
     if (acct) l.ownerId = ME.id;
-    S.lists.unshift(l); saveTo(l.id);
+    S.lists.unshift(l); saveTo(l.id); nudgeSignIn('list');
   } else if (kind === 'invite') {
     const who = String(fd.get('who') || '').trim(); const l = getList(f.dataset.id); if (!who || !l) return;
     if (!l.collab.some(n => n.toLowerCase() === who.toLowerCase())) l.collab.push(who);
