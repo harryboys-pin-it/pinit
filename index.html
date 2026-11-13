@@ -3793,6 +3793,8 @@ const ACTIONS = {
   'sign-out': async t => {
     if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Tap again to sign out'; return; }
     t.disabled = true;
+    /* Stop all syncing first, so removing the account's lists from this browser can never delete them online. */
+    STORE.on = false; STORE.canWrite = false; STORE.shadow.clear();
     try { await STORE.signOut(); } catch (e) {}
     /* Lists that live in the account leave this browser with it. Example lists stay. */
     S.lists = S.lists.filter(l => !l.remote); lsSet(NICK_KEY, ''); lsSet(PENDING_KEY, '');
